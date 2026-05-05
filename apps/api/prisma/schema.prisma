@@ -1,0 +1,183 @@
+// Prisma schema – derived from Django models.py
+// Matches: Kandidat, Hauptexperte, Nebenexperte, Vf, Notenuebersicht, Anpassung, Log
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  STAFF
+  ADMIN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  notenuebersichten Notenuebersicht[] @relation("PexUser")
+  logs              Log[]
+
+  @@map("users")
+}
+
+// ─── Domain Entities ─────────────────────────────────────────────────────────
+
+model Kandidat {
+  id         Int     @id // external ID from PKOrg
+  vorname    String  @db.VarChar(100)
+  nachname   String  @db.VarChar(100)
+  mail       String? @db.VarChar(254)
+  telefon    String? @db.VarChar(30)
+  geschlecht String? @db.VarChar(10)
+  titel      String? @db.VarChar(50)
+  firma      String? @db.VarChar(100)
+  plz        String? @db.VarChar(10)
+  ort        String? @db.VarChar(50)
+
+  notenuebersicht Notenuebersicht?
+
+  @@map("kandidaten")
+}
+
+model Hauptexperte {
+  id         Int     @id // external ID from PKOrg
+  vorname    String  @db.VarChar(100)
+  nachname   String  @db.VarChar(100)
+  mail       String? @db.VarChar(254)
+  telefon    String? @db.VarChar(30)
+  geschlecht String? @db.VarChar(10)
+  titel      String? @db.VarChar(50)
+  firma      String? @db.VarChar(100)
+  plz        String? @db.VarChar(10)
+  ort        String? @db.VarChar(50)
+
+  notenuebersichten Notenuebersicht[]
+
+  @@map("hauptexperten")
+}
+
+model Nebenexperte {
+  id         Int     @id // external ID from PKOrg
+  vorname    String  @db.VarChar(100)
+  nachname   String  @db.VarChar(100)
+  mail       String? @db.VarChar(254)
+  telefon    String? @db.VarChar(30)
+  geschlecht String? @db.VarChar(10)
+  titel      String? @db.VarChar(50)
+  firma      String? @db.VarChar(100)
+  plz        String? @db.VarChar(10)
+  ort        String? @db.VarChar(50)
+
+  notenuebersichten Notenuebersicht[]
+
+  @@map("nebenexperten")
+}
+
+model Vf {
+  id         Int     @id // external ID from PKOrg
+  vorname    String  @db.VarChar(100)
+  nachname   String  @db.VarChar(100)
+  mail       String? @db.VarChar(254)
+  telefon    String? @db.VarChar(30)
+  geschlecht String? @db.VarChar(10)
+  titel      String? @db.VarChar(50)
+  firma      String? @db.VarChar(100)
+  plz        String? @db.VarChar(10)
+  ort        String? @db.VarChar(50)
+
+  notenuebersichten Notenuebersicht[]
+
+  @@map("vfs")
+}
+
+model Notenuebersicht {
+  id            Int     @id @default(autoincrement())
+  fachrichtung  String? @db.VarChar(100)
+
+  kandidatId    Int     @unique
+  kandidat      Kandidat @relation(fields: [kandidatId], references: [id], onDelete: Cascade)
+
+  hauptexperteId Int?
+  hauptexperte   Hauptexperte? @relation(fields: [hauptexperteId], references: [id], onDelete: SetNull)
+
+  nebenexperteId Int?
+  nebenexperte   Nebenexperte? @relation(fields: [nebenexperteId], references: [id], onDelete: SetNull)
+
+  vfId          Int?
+  vf            Vf? @relation(fields: [vfId], references: [id], onDelete: SetNull)
+
+  pexUserId     Int?
+  pexUser       User? @relation("PexUser", fields: [pexUserId], references: [id], onDelete: SetNull)
+
+  // VF scores
+  punkteTeil1Vf  Int?
+  punkteTeil2Vf  Int?
+  noteTeil1Vf    Float?
+  noteTeil2Vf    Float?
+
+  // PEX scores
+  punkteTeil1    Int?
+  punkteTeil2    Int?
+  punkteTeil3    Int?
+  noteTeil1      Float?
+  noteTeil2      Float?
+  noteTeil3      Float?
+
+  // Calculated/PA scores
+  notePa             Float?
+  noteTeil1Errechnet Float?
+  noteTeil2Errechnet Float?
+  noteTeil3Errechnet Float?
+  notePaErrechnet    Float?
+
+  // Dates
+  signaturDurchfuehrung DateTime? @db.Date
+  zeitArbeitBis         DateTime? @db.Date
+  mainFileUpload        DateTime? @db.Date
+
+  // NK workflow state
+  nkComment   String?   @db.Text
+  nkTimestamp DateTime?
+  nkVisiert   Boolean   @default(false)
+  nkChange    Boolean   @default(false)
+
+  // Relations
+  anpassungen Anpassung[]
+
+  @@map("notenuebersichten")
+}
+
+model Anpassung {
+  id                Int              @id @default(autoincrement())
+  notenuebersichtId Int
+  notenuebersicht   Notenuebersicht  @relation(fields: [notenuebersichtId], references: [id], onDelete: Cascade)
+  pdfPath           String?          @db.VarChar(500)
+  createdAt         DateTime         @default(now())
+
+  @@map("anpassungen")
+}
+
+model Log {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   @db.VarChar(255)
+  timestamp DateTime @default(now())
+  before    String?  @db.Text
+  after     String?  @db.Text
+
+  @@map("logs")
+}

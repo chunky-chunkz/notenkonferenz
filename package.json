@@ -1,0 +1,33 @@
+{
+  "name": "mark-conference-system",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n shared,api,web -c blue,green,magenta \"npm run dev -w packages/shared\" \"npm run dev -w apps/api\" \"npm run dev -w apps/web\"",
+    "dev:api": "npm run dev -w apps/api",
+    "dev:web": "npm run dev -w apps/web",
+    "build": "npm run build --workspaces --if-present",
+    "build:api": "npm run build -w apps/api",
+    "build:web": "npm run build -w apps/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:migrate:dev": "npm run db:migrate:dev -w apps/api",
+    "db:migrate:deploy": "npm run db:migrate:deploy -w apps/api",
+    "db:seed": "npm run db:seed -w apps/api",
+    "db:studio": "npm run db:studio -w apps/api",
+    "worker": "npm run worker -w apps/api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@esbuild/win32-x64": "^0.28.0"
+  }
+}

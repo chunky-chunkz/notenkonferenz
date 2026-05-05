@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="de" ng-app="App" data-properties="{&quot;systemname&quot;:&quot;PkOrg 3&quot;,&quot;version&quot;:&quot;12.5.4-21a4cc0&quot;,&quot;debugMode&quot;:false,&quot;mailumleitung&quot;:null,&quot;assetversions&quot;:{&quot;bundle.js&quot;:&quot;8cb7c459&quot;,&quot;design.js&quot;:&quot;57715753&quot;,&quot;libraries.js&quot;:&quot;5613ccc2&quot;,&quot;libraries.css&quot;:&quot;472650f4&quot;,&quot;theme.css&quot;:&quot;e5601448&quot;,&quot;locale-de.js&quot;:&quot;3421d48a&quot;,&quot;locale-en.js&quot;:&quot;b35a02c0&quot;,&quot;locale-fr.js&quot;:&quot;ad0530cf&quot;,&quot;locale-it.js&quot;:&quot;ac082c2b&quot;,&quot;translate.js&quot;:&quot;f418de99&quot;,&quot;de.js&quot;:&quot;26dc2664&quot;,&quot;fr.js&quot;:&quot;b8ea0c8a&quot;,&quot;it.js&quot;:&quot;a8602166&quot;,&quot;en.js&quot;:&quot;604763bd&quot;},&quot;languages&quot;:{&quot;de&quot;:&quot;Deutsch&quot;,&quot;fr&quot;:&quot;Franz\u00f6sisch&quot;,&quot;it&quot;:&quot;Italienisch&quot;,&quot;en&quot;:&quot;Englisch&quot;,&quot;zz&quot;:&quot;\u00dcbersetzungsmodus&quot;},&quot;language&quot;:&quot;de&quot;,&quot;userLanguage&quot;:&quot;de&quot;,&quot;idle_ttl&quot;:5400,&quot;time&quot;:null,&quot;timezone&quot;:&quot;Europe\/Zurich&quot;,&quot;theme&quot;:&quot;pkorg&quot;,&quot;affiliation&quot;:{&quot;client&quot;:&quot;Inf Api CH neu&quot;,&quot;role&quot;:&quot;CEX&quot;,&quot;cmandantrollekurz&quot;:&quot;CEX&quot;,&quot;nrolle2mandantid&quot;:8963,&quot;nmandantid&quot;:1643,&quot;nrolleid&quot;:11,&quot;ctyp&quot;:&quot;BERUF&quot;,&quot;nparentmandantid&quot;:274,&quot;nparentrolleid&quot;:3,&quot;parentclient&quot;:&quot;MasterInfBer&quot;,&quot;parentrole&quot;:&quot;PoAdmin&quot;,&quot;mconfig&quot;:{&quot;boilerplate.requiredfields&quot;:{&quot;ctelefonprivat&quot;:&quot;\/^\\D{0,4}(\\d\\D{0,2}){10,16}$\/&quot;},&quot;boilerplate.archiveallowed&quot;:false},&quot;npersonenzuteilungid&quot;:1100244},&quot;moreAffs&quot;:false,&quot;user&quot;:true,&quot;mandantId&quot;:null,&quot;superuser&quot;:false,&quot;basepath&quot;:&quot;\/&quot;,&quot;project&quot;:null,&quot;host&quot;:&quot;[[host]]&quot;,&quot;monitorHosts&quot;:{&quot;2026-host1&quot;:&quot;https:\/\/2026-host1.pkorg.ch&quot;,&quot;2026-host2&quot;:&quot;https:\/\/2026-host2.pkorg.ch&quot;,&quot;2026-host3&quot;:&quot;https:\/\/2026-host3.pkorg.ch&quot;,&quot;2026-host4&quot;:&quot;https:\/\/2026-host4.pkorg.ch&quot;,&quot;2026-host5&quot;:&quot;https:\/\/2026-host5.pkorg.ch&quot;,&quot;2026-host6&quot;:&quot;https:\/\/2026-host6.pkorg.ch&quot;,&quot;2026-host7&quot;:&quot;https:\/\/2026-host7.pkorg.ch&quot;,&quot;2026-host8&quot;:&quot;https:\/\/2026-host8.pkorg.ch&quot;},&quot;systemHost&quot;:&quot;2026-host1&quot;,&quot;onboarding&quot;:{&quot;action&quot;:&quot;skip&quot;,&quot;timestamp&quot;:{&quot;date&quot;:&quot;2026-04-15 13:16:19.595128&quot;,&quot;timezone_type&quot;:3,&quot;timezone&quot;:&quot;Europe\/Zurich&quot;}},&quot;systemjahr&quot;:2026,&quot;systemjahrstichtag&quot;:&quot;%year%-09-01&quot;,&quot;appClient&quot;:null,&quot;showTestsystem&quot;:false,&quot;homeUrl&quot;:&quot;\/&quot;,&quot;labelprefix&quot;:&quot;&quot;,&quot;isImpersonating&quot;:false,&quot;robots&quot;:&quot;noindex,nofollow&quot;,&quot;isMobileApp&quot;:false,&quot;canGenerateStaticSite&quot;:false}" data-version="12.5.4-21a4cc0">
+<head>
+    <title>PkOrg 3</title>
+    <meta http-equiv='content-type' content='text/html; charset=utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' />
+    <meta name="robots" content="noindex,nofollow">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+    <link rel="icon" type="image/png" href="/themes/pkorg/img/favicon-16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="/themes/pkorg/img/favicon-32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="/themes/pkorg/img/favicon-96.png" sizes="96x96">
+    <link rel="stylesheet" type="text/css" href="/css/libraries.css?v=472650f4">
+    <link rel="stylesheet" type="text/css" href="/themes/pkorg/css/theme.css?v=e5601448">
+
+    <!-- Fonts and icons -->
+    <link rel="stylesheet" type="text/css" href="/themes/pkorg/fonts/elegant-font/style.css?v=12.5.4-21a4cc0">
+
+    <script type="text/javascript" src="/js/translate.js?v=f418de99"></script>
+    <script type="text/javascript" src="/js/libraries.js?v=5613ccc2"></script>
+        <script type="text/javascript" src="/js/locale/locale-de.js?v=3421d48a"></script>
+        <script type="text/javascript" src="/js/bundle.js?v=8cb7c459"></script>
+    <script type="text/javascript" src="/js/design.js?v=57715753"></script>
+</head>
+<body ng-controller="CoreCtrl">
+
+<notification data-messages='{}'></notification>
+<action-blocker></action-blocker>
+
+
+
+    <script>var affiliations = [{"client":"Inf Api CH neu","role":"CEX","cmandantrollekurz":"CEX","nrolle2mandantid":8963,"nmandantid":1643,"nrolleid":11,"ctyp":"BERUF","nparentmandantid":274,"nparentrolleid":3,"parentclient":"MasterInfBer","parentrole":"PoAdmin","mconfig":{"boilerplate.requiredfields":{"ctelefonprivat":"\/^\\D{0,4}(\\d\\D{0,2}){10,16}$\/"},"boilerplate.archiveallowed":false},"npersonenzuteilungid":1100244,"classes":"mandantSwitch","isactive":true,"year":2025,"forceLabelPrefix":"Inf Api CH neu","alias":null,"label_client":"Inf Api CH","label_client_long":"Informatiker\/-in Applikationsentwicklung Schweiz","label_role":"CEX","label_role_long":"Chefexpert:in","label_role_client_short":"Inf Api CH: CEX","label_role_client_long":"Chefexpert:in in Informatiker\/-in Applikationsentwicklung Schweiz","label_parentclient":"Inf Master","label_parentclient_long":"Informatik-Berufe Master"},{"client":"Inf Platt CH","role":"CEX","cmandantrollekurz":"CEX","nrolle2mandantid":8956,"nmandantid":1642,"nrolleid":11,"ctyp":"BERUF","nparentmandantid":274,"nparentrolleid":3,"parentclient":"MasterInfBer","parentrole":"PoAdmin","mconfig":{"boilerplate.requiredfields":{"ctelefonprivat":"\/^\\D{0,4}(\\d\\D{0,2}){10,16}$\/"},"boilerplate.archiveallowed":false},"npersonenzuteilungid":1100245,"classes":"mandantSwitch","isactive":false,"year":2025,"forceLabelPrefix":"Inf Platt CH","alias":null,"label_client":"Inf Platt CH","label_client_long":"Informatiker\/-in (Plattformentwicklung) EFZ CH","label_role":"CEX","label_role_long":"Chefexpert:in","label_role_client_short":"Inf Platt CH: CEX","label_role_client_long":"Chefexpert:in in Informatiker\/-in (Plattformentwicklung) EFZ CH","label_parentclient":"Inf Master","label_parentclient_long":"Informatik-Berufe Master"},{"client":"Inf Api CH neu","role":"VEX","cmandantrollekurz":"VEX","nrolle2mandantid":8966,"nmandantid":1643,"nrolleid":20,"ctyp":"BERUF","nparentmandantid":274,"nparentrolleid":11,"parentclient":"MasterInfBer","parentrole":"CEX","mconfig":{"boilerplate.home":"pkorg-dashboard"},"npersonenzuteilungid":1100014,"classes":"mandantSwitch","isactive":false,"year":2025,"forceLabelPrefix":"Inf Api CH neu","alias":null,"label_client":"Inf Api CH","label_client_long":"Informatiker\/-in Applikationsentwicklung Schweiz","label_role":"VEX","label_role_long":"Validexpert:in","label_role_client_short":"Inf Api CH: VEX","label_role_client_long":"Validexpert:in in Informatiker\/-in Applikationsentwicklung Schweiz","label_parentclient":"Inf Master","label_parentclient_long":"Informatik-Berufe Master"},{"client":"Inf Api CH neu","role":"EXP","cmandantrollekurz":"EXP","nrolle2mandantid":8964,"nmandantid":1643,"nrolleid":12,"ctyp":"BERUF","nparentmandantid":274,"nparentrolleid":11,"parentclient":"MasterInfBer","parentrole":"CEX","mconfig":{"boilerplate.home":"pkorg-dashboard","boilerplate.requiredfields":{"cstrasse":true,"cplz":"\/^\\d{4,20}$\/","cort":true,"ctelefonprivat":"\/^\\D{0,4}(\\d\\D{0,2}){10,16}$\/"}},"npersonenzuteilungid":961531,"classes":"mandantSwitch","isactive":false,"year":2025,"forceLabelPrefix":"Inf Api CH neu","alias":null,"label_client":"Inf Api CH","label_client_long":"Informatiker\/-in Applikationsentwicklung Schweiz","label_role":"EXP","label_role_long":"Expert:in","label_role_client_short":"Inf Api CH: EXP","label_role_client_long":"Expert:in in Informatiker\/-in Applikationsentwicklung Schweiz","label_parentclient":"Inf Master","label_parentclient_long":"Informatik-Berufe Master"},{"client":"Inf Api CH neu","role":"BB","cmandantrollekurz":"BB","nrolle2mandantid":8962,"nmandantid":1643,"nrolleid":19,"ctyp":"BERUF","nparentmandantid":274,"nparentrolleid":11,"parentclient":"MasterInfBer","parentrole":"CEX","mconfig":{"boilerplate.home":"pkorg-dashboard","boilerplate.requiredfields":{"cfirma_ge":true,"cstrasse_ge":true,"cplz_ge":"\/^\\d{4,20}$\/","cort_ge":true,"ctelefon_ge":"\/^\\D{0,4}(\\d\\D{0,2}){10,16}$\/"}},"npersonenzuteilungid":1100015,"classes":"mandantSwitch","isactive":false,"year":2025,"forceLabelPrefix":"Inf Api CH neu","alias":null,"label_client":"Inf Api CH","label_client_long":"Informatiker\/-in Applikationsentwicklung Schweiz","label_role":"BB","label_role_long":"Berufsbildner:in","label_role_client_short":"Inf Api CH: BB","label_role_client_long":"Berufsbildner:in in Informatiker\/-in Applikationsentwicklung Schweiz","label_parentclient":"Inf Master","label_parentclient_long":"Informatik-Berufe Master"}];</script>
+<div class="wrapper sidebar-mini" ng-controller="PkorgThemeCtrl" keyboard-shortcuts import="affiliations" assign="affiliations" ng-class="{'sidebar-mini': navigation.small, 'nav-open': navigation.mobile.open, 'nav-open-left': navigation.mobile.open === 'left', 'nav-open-right': navigation.mobile.open === 'right'}">
+
+    <div class="sidebar left">
+    <h1 class="logo">
+        <a href="/" title='PKORG'>
+            <svg id="0723b2cb-4ed9-4042-bef0-fa985da3d171" data-name="Ebene 1" xmlns="http://www.w3.org/2000/svg" width="142.25"
+     height="196.67" viewBox="0 0 142.25 196.67" class="logo-image">
+    <defs>
+        <style>
+            .none {
+                fill: none;
+            }
+
+            .grey-dark {
+                fill: #a1abab;
+            }
+
+            .grey-light {
+                fill: #bfc8c3;
+            }
+
+            .accent-green {
+                fill: #95c125;
+            }
+
+            .accent-blue {
+                fill: #52c1dc;
+            }
+        </style>
+    </defs>
+    <title>PkOrg 3 Bildmarke</title>
+    <rect class="none" width="142.25" height="196.63"/>
+    <path id="e1" class="el grey-dark" d="M9.12,93.15A9.07,9.07,0,0,1,0,84.07H0V84A9.07,9.07,0,1,1,18.2,84v.09a9.07,9.07,0,0,1-9.07,9.07"/>
+    <path id="e2" class="el accent-green" d="M33.93,93.15a9.07,9.07,0,0,1-9.07-9.07h0V39.79a9.07,9.07,0,0,1,18.15,0h0V84.1a9.07,9.07,0,0,1-9.07,9.07"/>
+    <path id="e3" class="el grey-dark" d="M58.74,145.91a9.07,9.07,0,0,1-9.07-9.07V9.07a9.07,9.07,0,0,1,18.15,0V136.84a9.07,9.07,0,0,1-9.07,9.07"/>
+    <path id="e4" class="el accent-blue" d="M83.55,162.9a9.07,9.07,0,0,1-9.07-9.07h0v-114a9.07,9.07,0,0,1,18.15,0h0v114a9.07,9.07,0,0,1-9.07,9.07h0"/>
+    <path id="e5" class="el grey-light" d="M108.36,106.19a9.07,9.07,0,0,1-9.07-9.07v-26a9.07,9.07,0,0,1,18.15,0v26a9.07,9.07,0,0,1-9.07,9.07"/>
+    <path id="e6" class="el grey-light" d="M133.17,93.15a9.07,9.07,0,0,1-9.07-9.07h0V84a9.07,9.07,0,0,1,18.15,0v.09a9.07,9.07,0,0,1-9.07,9.07h0"/>
+    <g>
+        <path class="grey-light" d="M12.91,181.57A5.47,5.47,0,0,1,9.24,183H2.13v-9.5h7a5.48,5.48,0,0,1,3.76,1.39,4.38,4.38,0,0,1,0,6.72m-3.8-10.23H1.06A1.08,1.08,0,0,0,0,172.43v23.15a1.06,1.06,0,0,0,2.11,0V185.08H9.5a7.5,7.5,0,0,0,5-2.13,6.48,6.48,0,0,0,.29-9.16q-.2-.21-.41-.4a7.47,7.47,0,0,0-5.26-2"/>
+        <path class="grey-light" d="M74.72,191.44a10.45,10.45,0,1,1,3.1-7.43,10.12,10.12,0,0,1-3.1,7.43m-7.43-20.05a12.62,12.62,0,1,0,8.93,3.7,12.16,12.16,0,0,0-8.93-3.7"/>
+        <path class="grey-light" d="M141.87,182.62a1,1,0,0,0-.76-.32h-5.27a1,1,0,0,0-.76.32,1,1,0,0,0-.32.74,1,1,0,0,0,.32.76,1.06,1.06,0,0,0,.76.3h4.21v7.47a10.53,10.53,0,1,1-.54-16.23,1,1,0,0,0,.77.22,1,1,0,0,0,.67-.4,1,1,0,0,0,.22-.79,1,1,0,0,0-.4-.67,12.31,12.31,0,0,0-7.69-2.61,12.64,12.64,0,1,0,8.52,22l.25-.22a1,1,0,0,0,.3-.74v-9.06a1,1,0,0,0-.3-.74"/>
+        <path class="grey-light" d="M105.47,181.52a5.33,5.33,0,0,1-3.64,1.4h-7v-9.41h6.92a5.38,5.38,0,0,1,3.73,1.39,4.34,4.34,0,0,1,0,6.62m1.83,1.11a6.42,6.42,0,0,0-.24-9.08l-.15-.13a7.43,7.43,0,0,0-5.21-2h-8a1,1,0,0,0-.74.3,1,1,0,0,0-.3.74v23a1,1,0,0,0,1,1h0a1,1,0,0,0,1.06-1V185h5.88l5.44,11a1,1,0,0,0,.93.58,1,1,0,0,0,.46-.11,1,1,0,0,0,.53-.6,1,1,0,0,0-.05-.79l-5-10.22a7.21,7.21,0,0,0,4.35-2.29"/>
+        <path class="grey-light" d="M34.83,183.85,45,173.22a1,1,0,0,0,.28-.76,1,1,0,0,0-.32-.72,1.06,1.06,0,0,0-.76-.3,1,1,0,0,0-.72.34L30.26,185.65V172.39a1,1,0,0,0-1.06-1,1,1,0,0,0-1,1s0,0,0,0v23a1,1,0,0,0,1,1.06h0a1.08,1.08,0,0,0,1.06-1.06v-6.72l3.13-3.31,10.41,11a1,1,0,0,0,.76.32,1,1,0,0,0,.72-.28,1,1,0,0,0,.34-.74,1,1,0,0,0-.3-.74Z"/>
+    </g>
+</svg>
+
+        </a>
+        <span title="" ng-if="::debugHost" ng-bind="::debugHost | uppercase"></span>
+    </h1>
+    <navigation>
+    <nav class="sidebar-wrapper">
+        <div class="pkorg-navbar-mobile">
+            <h4 class="modal-title">[[::'Rollen'| trans]]</h4>
+            <ul class="nav navbar-nav navbar-left">
+                                    
+                                            <li class="dropdown open nav-li-mandant" uib-dropdown uib-dropdown-open="true">
+                            <ul id="client-switcher-mobile">
+                                                                                                        <li ng-class='isCurrentAff({"client":"Inf Api CH neu","role":"CEX"}) ? "active" : ""'>
+                                        <a href="#"
+                                           class="mandantSwitch"
+                                           ng-click='switchAffiliation({"client":"Inf Api CH neu","role":"CEX"})'>
+                                            Inf Api CH (CEX)
+                                        </a>
+                                    </li>
+                                                                                                        <li ng-class='isCurrentAff({"client":"Inf Platt CH","role":"CEX"}) ? "active" : ""'>
+                                        <a href="#"
+                                           class="mandantSwitch"
+                                           ng-click='switchAffiliation({"client":"Inf Platt CH","role":"CEX"})'>
+                                            Inf Platt CH (CEX)
+                                        </a>
+                                    </li>
+                                                                                                        <li ng-class='isCurrentAff({"client":"Inf Api CH neu","role":"VEX"}) ? "active" : ""'>
+                                        <a href="#"
+                                           class="mandantSwitch"
+                                           ng-click='switchAffiliation({"client":"Inf Api CH neu","role":"VEX"})'>
+                                            Inf Api CH (VEX)
+                                        </a>
+                                    </li>
+                                                                                                        <li ng-class='isCurrentAff({"client":"Inf Api CH neu","role":"EXP"}) ? "active" : ""'>
+                                        <a href="#"
+                                           class="mandantSwitch"
+                                           ng-click='switchAffiliation({"client":"Inf Api CH neu","role":"EXP"})'>
+                                            Inf Api CH (EXP)
+                                        </a>
+                                    </li>
+                                                                                                        <li ng-class='isCurrentAff({"client":"Inf Api CH neu","role":"BB"}) ? "active" : ""'>
+                                        <a href="#"
+                                           class="mandantSwitch"
+                                           ng-click='switchAffiliation({"client":"Inf Api CH neu","role":"BB"})'>
+                                            Inf Api CH (BB)
+                                        </a>
+                                    </li>
+                                                            </ul>
+                        </li>
+                                                </ul>
+        </div>
+    </nav>
+</navigation>
+</div>
+<div class="sidebar">
+     <h1 class="logo">
+         <a href="/" title='PKORG'>
+             <svg id="0723b2cb-4ed9-4042-bef0-fa985da3d171" data-name="Ebene 1" xmlns="http://www.w3.org/2000/svg" width="142.25"
+     height="196.67" viewBox="0 0 142.25 196.67" class="logo-image">
+    <defs>
+        <style>
+            .none {
+                fill: none;
+            }
+
+            .grey-dark {
+                fill: #a1abab;
+            }
+
+            .grey-light {
+                fill: #bfc8c3;
+            }
+
+            .accent-green {
+                fill: #95c125;
+            }
+
+            .accent-blue {
+                fill: #52c1dc;
+            }
+        </style>
+    </defs>
+    <title>PkOrg 3 Bildmarke</title>
+    <rect class="none" width="142.25" height="196.63"/>
+    <path id="e1" class="el grey-dark" d="M9.12,93.15A9.07,9.07,0,0,1,0,84.07H0V84A9.07,9.07,0,1,1,18.2,84v.09a9.07,9.07,0,0,1-9.07,9.07"/>
+    <path id="e2" class="el accent-green" d="M33.93,93.15a9.07,9.07,0,0,1-9.07-9.07h0V39.79a9.07,9.07,0,0,1,18.15,0h0V84.1a9.07,9.07,0,0,1-9.07,9.07"/>
+    <path id="e3" class="el grey-dark" d="M58.74,145.91a9.07,9.07,0,0,1-9.07-9.07V9.07a9.07,9.07,0,0,1,18.15,0V136.84a9.07,9.07,0,0,1-9.07,9.07"/>
+    <path id="e4" class="el accent-blue" d="M83.55,162.9a9.07,9.07,0,0,1-9.07-9.07h0v-114a9.07,9.07,0,0,1,18.15,0h0v114a9.07,9.07,0,0,1-9.07,9.07h0"/>
+    <path id="e5" class="el grey-light" d="M108.36,106.19a9.07,9.07,0,0,1-9.07-9.07v-26a9.07,9.07,0,0,1,18.15,0v26a9.07,9.07,0,0,1-9.07,9.07"/>
+    <path id="e6" class="el grey-light" d="M133.17,93.15a9.07,9.07,0,0,1-9.07-9.07h0V84a9.07,9.07,0,0,1,18.15,0v.09a9.07,9.07,0,0,1-9.07,9.07h0"/>
+    <g>
+        <path class="grey-light" d="M12.91,181.57A5.47,5.47,0,0,1,9.24,183H2.13v-9.5h7a5.48,5.48,0,0,1,3.76,1.39,4.38,4.38,0,0,1,0,6.72m-3.8-10.23H1.06A1.08,1.08,0,0,0,0,172.43v23.15a1.06,1.06,0,0,0,2.11,0V185.08H9.5a7.5,7.5,0,0,0,5-2.13,6.48,6.48,0,0,0,.29-9.16q-.2-.21-.41-.4a7.47,7.47,0,0,0-5.26-2"/>
+        <path class="grey-light" d="M74.72,191.44a10.45,10.45,0,1,1,3.1-7.43,10.12,10.12,0,0,1-3.1,7.43m-7.43-20.05a12.62,12.62,0,1,0,8.93,3.7,12.16,12.16,0,0,0-8.93-3.7"/>
+        <path class="grey-light" d="M141.87,182.62a1,1,0,0,0-.76-.32h-5.27a1,1,0,0,0-.76.32,1,1,0,0,0-.32.74,1,1,0,0,0,.32.76,1.06,1.06,0,0,0,.76.3h4.21v7.47a10.53,10.53,0,1,1-.54-16.23,1,1,0,0,0,.77.22,1,1,0,0,0,.67-.4,1,1,0,0,0,.22-.79,1,1,0,0,0-.4-.67,12.31,12.31,0,0,0-7.69-2.61,12.64,12.64,0,1,0,8.52,22l.25-.22a1,1,0,0,0,.3-.74v-9.06a1,1,0,0,0-.3-.74"/>
+        <path class="grey-light" d="M105.47,181.52a5.33,5.33,0,0,1-3.64,1.4h-7v-9.41h6.92a5.38,5.38,0,0,1,3.73,1.39,4.34,4.34,0,0,1,0,6.62m1.83,1.11a6.42,6.42,0,0,0-.24-9.08l-.15-.13a7.43,7.43,0,0,0-5.21-2h-8a1,1,0,0,0-.74.3,1,1,0,0,0-.3.74v23a1,1,0,0,0,1,1h0a1,1,0,0,0,1.06-1V185h5.88l5.44,11a1,1,0,0,0,.93.58,1,1,0,0,0,.46-.11,1,1,0,0,0,.53-.6,1,1,0,0,0-.05-.79l-5-10.22a7.21,7.21,0,0,0,4.35-2.29"/>
+        <path class="grey-light" d="M34.83,183.85,45,173.22a1,1,0,0,0,.28-.76,1,1,0,0,0-.32-.72,1.06,1.06,0,0,0-.76-.3,1,1,0,0,0-.72.34L30.26,185.65V172.39a1,1,0,0,0-1.06-1,1,1,0,0,0-1,1s0,0,0,0v23a1,1,0,0,0,1,1.06h0a1.08,1.08,0,0,0,1.06-1.06v-6.72l3.13-3.31,10.41,11a1,1,0,0,0,.76.32,1,1,0,0,0,.72-.28,1,1,0,0,0,.34-.74,1,1,0,0,0-.3-.74Z"/>
+    </g>
+</svg>
+
+         </a>
+         <span title="" ng-if="::debugHost" ng-bind="::debugHost | uppercase"></span>
+     </h1>
+
+     <navigation>
+    <nav class="sidebar-wrapper">
+        <div class="pkorg-navbar-mobile">
+            <ul class="nav navbar-nav navbar-left">
+
+                <!-- Language-Teil -->
+                
+                                    <ul class="nav navbar-nav navbar-lang">
+                                                    <li class="active nav-li-lang">
+                                <a href="/lang/de" title='Deutsch'>
+                                    D
+                                </a>
+                            </li>
+                                            </ul>
+                            </ul>
+            <!-- Zeitsimulation -->
+                        <ul class="nav navbar-nav navbar-user">
+                                    <!-- User Menu -->
+                    
+                    <li class="dropdown nav-li-user dropdown-with-icons">
+                        <a href="#" class="usermenu-toggle " slide-toggle="#usermenu">
+                            <span class="avatar" style="background-image: url(/themes/pkorg/img/default_avatar.svg);"></span>
+                            <span class="username">
+                                    D M
+                                    <span ng-if="0 > 0" class="notification notification-inline">
+                                        <span ng-cloak ng-bind="0"></span>
+                                    </span>
+                                    <b class="caret"></b>
+                                </span>
+                        </a>
+                        <div id="usermenu" class="slideable collapse in">
+                                <ul class="dropdown-menu dropdown-with-icons ng-cloak" meta-navigation data-metablock='{"01_meinenachrichtennotifications":{"value":{"cinternername":"user.01_meinenachrichtennotifications","canzeigename":"Nachrichten","czielroute":"notifications","nstatus":1,"cicon":"icon icon_mail_alt","notificationvalue":0,"nmenuid":1270603634},"children":[]},"02_meinedaten":{"value":{"cinternername":"user.02_meinedaten","cstringid":"menu.Profil","cicon":"icon icon_id","crecht":null,"czielroute":"meine-daten","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Profil","nmenuid":4062109319,"notificationvalue":0},"children":[]},"03_calendar":{"value":{"cinternername":"user.03_calendar","cstringid":"menu.Kalender","cicon":"icon icon_calendar","crecht":null,"czielroute":"termine","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Kalender","nmenuid":1891448653,"notificationvalue":0},"children":[]},"06_tracticket":{"value":{"cinternername":"user.06_tracticket","cstringid":"menu.tracTicket","cicon":"icon icon-ticket","crecht":"TRAC_VIEW","czielroute":"support\/tickets","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Ticketsystem","nmenuid":540793380,"notificationvalue":0},"children":[]},"10_divider":{"value":{"cinternername":"user.10_divider","cstringid":"----","cicon":null,"crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"----","nmenuid":3618020507,"notificationvalue":0},"children":[]},"11_support":{"value":{"cinternername":"user.11_support","cstringid":"menu.Support","cicon":"icon icon_question","crecht":null,"czielroute":"support","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":1,"nstatus":1,"canzeigename":"Support","nmenuid":1414843279,"notificationvalue":0},"children":[]},"12_ersteschritte":{"value":{"cinternername":"user.12_ersteschritte","cstringid":"menu.ErsteSchritte","cicon":"icon icon-info","crecht":"PKORG_ONBOARDING","czielroute":"template\/pkorg-onboarding.html","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Erste Schritte","nmenuid":4045454223,"notificationvalue":0},"children":[]},"13_nutzungsbestimmungen":{"value":{"cinternername":"user.13_nutzungsbestimmungen","cstringid":"menu.Nutzungsbestimmungen","cicon":"icon icon-info","crecht":null,"czielroute":"terms","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Pr\u00fcfungsbestimmungen","nmenuid":1338677904,"notificationvalue":0},"children":[]},"14_ueberpkorg":{"value":{"cinternername":"user.14_ueberpkorg","cstringid":"menu.UeberPkorg","cicon":"icon icon-info","crecht":null,"czielroute":"ueberpkorg","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":1,"nstatus":1,"canzeigename":"\u00dcber PkOrg","nmenuid":595835124,"notificationvalue":0},"children":[]}}'>
+        <li ng-repeat="metablock in ::metablockData" ng-class="metablock.value.canzeigename==='----' ? 'divider' : ''" ng-if="metablock.value.nstatus == 1" class="[[ metablock.value.cstyleclass ]]">
+
+            <!-- Show normal link if dialog-flag not set -->
+            <a class="[[ metablock.value.cstyleclass ]]" ng-if="!metablock.value.nisdialog" href="/[[ metablock.value.czielroute ]]" title="[[ metablock.value.canzeigename ]]">
+                <i class="[[ metablock.value.cicon ]]"></i> [[ metablock.value.canzeigename ]]
+                <span ng-if="metablock.value.notificationvalue > 0" class="notification notification-inline"><span>[[ metablock.value.notificationvalue ]]</span></span>
+            </a>
+
+            <!-- Show dialog if dialog-flag is set -->
+            <a class="[[ metablock.value.cstyleclass ]]" ng-if="metablock.value.nisdialog == 1" iv-dialog="" href="/[[ metablock.value.czielroute ]]" title="[[ metablock.value.canzeigename ]]">
+                <i class="[[ metablock.value.cicon ]]"></i> [[ metablock.value.canzeigename ]]
+                <span ng-if="metablock.value.notificationvalue > 0" class="notification notification-inline"><span>[[ metablock.value.notificationvalue ]]</span></span>
+            </a>
+
+            <!-- Show dialog if dialog-flag is set -->
+            <a class="[[ metablock.value.cstyleclass ]]" ng-if="metablock.value.nisdialog == 2" iv-ng-dialog href="/[[ metablock.value.czielroute ]]" title="[[ metablock.value.canzeigename ]]">
+                <i class="[[ metablock.value.cicon ]]"></i> [[ metablock.value.canzeigename ]]
+                <span ng-if="metablock.value.notificationvalue > 0" class="notification notification-inline"><span>[[ metablock.value.notificationvalue ]]</span></span>
+            </a>
+        </li>
+    </ul>
+
+                        </div>
+                    </li>
+                    <!-- Logout Button -->
+                    <li class="nav-li-logout">
+                        <a href
+                           ng-click="logout('/logout')"
+                           title="Abmelden"
+                           class="logout-link">
+                            <i class="icon icon-power-off icon-navbar-large"></i>
+                            <p class="hidden-md hidden-lg">Abmelden</p>
+                        </a>
+                    </li>
+                                                    <li>
+                        
+                    </li>
+                            </ul>
+        </div>
+            <ul ng-cloak class="nav main-navigation" role="menu" main-navigation data-block='{"03_dokumente":{"value":{"cinternername":"main.03_dokumente","cstringid":"menu.Dokumente","cicon":"icon icon-file-text-o","crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Dokumente","nmenuid":1798540571,"notificationvalue":3},"children":{"01_dokumentenbereichbearbeiten":{"value":{"cinternername":"main.03_dokumente.01_dokumentenbereichbearbeiten","cstringid":"menu.Dokumentenbereich","cicon":null,"crecht":"VERWALTUNG_DOKUMENTKATEGORIE_EDIT","czielroute":"dokumentkategorie\/list","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Dokumentenbereich bearbeiten","nmenuid":2401777393,"notificationvalue":0},"children":[]},"06_dokumentenkategorienAllgemeine Informationen zur IPA 2026":{"value":{"nmenuid":3088200802,"cinternername":"main.03_dokumente.06_dokumentenkategorienAllgemeine Informationen zur IPA 2026","canzeigename":"Allgemeine Informationen zur IPA 2026","crecht":"VERWALTUNG_DOKUMENT_VIEW","czielroute":"dokument\/2149\/view","notificationvalue":3,"nisdialog":2,"nstatus":1},"children":[]},"06_dokumentenkategorienUnterlagen & Informationen":{"value":{"nmenuid":2776881063,"cinternername":"main.03_dokumente.06_dokumentenkategorienUnterlagen & Informationen","canzeigename":"Unterlagen & Informationen","crecht":"VERWALTUNG_DOKUMENT_VIEW","czielroute":"dokument\/2436\/view","notificationvalue":0,"nisdialog":2,"nstatus":1},"children":[]}}},"05_angeboteumfragen":{"value":{"cinternername":"main.05_angeboteumfragen","cstringid":"menu.Angebote","cicon":"icon icon-pencil-square-o","crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":null,"nstatus":1,"canzeigename":"Angebote","nmenuid":2952426218,"notificationvalue":0},"children":{"01_veranstaltungenbearbeiten":{"value":{"cinternername":"main.05_angeboteumfragen.01_veranstaltungenbearbeiten","cstringid":"menu.Veranstaltungenbearbeiten","cicon":null,"crecht":"VERANSTALTUNG_VERANSTALTUNG_EDIT","czielroute":"veranstaltung\/list","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":null,"nstatus":1,"canzeigename":"Veranstaltungen bearbeiten","nmenuid":3784098185,"notificationvalue":0},"children":[]},"02_veranstaltungenkurseVeranstaltungen":{"value":{"nmenuid":3377070531,"cinternername":"main.05_angeboteumfragen.02_veranstaltungenkurseVeranstaltungen","canzeigename":"Veranstaltungen","crecht":"VERANSTALTUNG_VERANSTALTUNG_VIEW","czielroute":"veranstaltung\/anmeldungen","notificationvalue":0,"nisdialog":2,"nstatus":1},"children":[]},"03_umfragenadmin":{"value":{"cinternername":"main.05_angeboteumfragen.03_umfragenadmin","cstringid":"menu.UmfragenAdmin","cicon":null,"crecht":"SURVEY_ADMIN","czielroute":"umfragen\/admin","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Umfragen bearbeiten","nmenuid":7342864,"notificationvalue":0},"children":[]},"04_umfragenUmfragen":{"value":{"nmenuid":4281043131,"cinternername":"main.05_angeboteumfragen.04_umfragenUmfragen","canzeigename":"Umfragen","czielroute":"umfragen","notificationvalue":0,"nisdialog":0,"nstatus":1},"children":[]}}},"15_system":{"value":{"cinternername":"main.15_system","cstringid":"menu.System","cicon":"icon icon-cog","crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"System","nmenuid":2252471636,"notificationvalue":0},"children":{"01_dashboard":{"value":{"cinternername":"main.15_system.01_dashboard","cstringid":"menu.Dashboard","cicon":null,"crecht":"PKORG_DASHBOARD_VIEW","czielroute":"dashboard","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Dashboard","nmenuid":2792331512,"notificationvalue":0},"children":[]},"02_barcode0":{"value":{"nmenuid":1341156691,"cinternername":"main.15_system.02_barcode0","canzeigename":"Barcodeleser","crecht":"BARCODE_READER","czielroute":"barcode","nisdialog":0,"nstatus":1,"notificationvalue":0},"children":[]},"03_notenexport":{"value":{"cinternername":"main.15_system.03_notenexport","cstringid":"menu.Notenexport","cicon":null,"crecht":"PKORG_NOTENEXPORT","czielroute":"notenexport","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Notenexport","nmenuid":3888141549,"notificationvalue":0},"children":[]},"04_trenner":{"value":{"cinternername":"main.15_system.04_trenner","cstringid":"----","cicon":null,"crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"----","nmenuid":1761844224,"notificationvalue":0},"children":[]},"05_benutzerverwaltung":{"value":{"cinternername":"main.15_system.05_benutzerverwaltung","cstringid":"menu.Benutzerverwaltung","cicon":null,"crecht":"PERSON_VIEW","czielroute":"benutzerverwaltung","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Benutzerverwaltung","nmenuid":646916107,"notificationvalue":0},"children":[]},"06_poolmove":{"value":{"cinternername":"main.15_system.06_poolmove","cstringid":"menu.poolmove","cicon":null,"crecht":"PKORG_CONFIGURATION_EDIT","czielroute":"pool\/move","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":null,"nstatus":1,"canzeigename":"Kandidat:innen verschieben","nmenuid":3373319477,"notificationvalue":0},"children":[]},"10_expertenteamverwaltung":{"value":{"cinternername":"main.15_system.10_expertenteamverwaltung","cstringid":"menu.Expertenteam","cicon":null,"crecht":"PKORG_EXPERTENTEAM_EDIT","czielroute":"pkorg-expertteam","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Expert:innen Teams","nmenuid":925094313,"notificationvalue":0},"children":[]},"11_validexpertenzuteilung":{"value":{"cinternername":"main.15_system.11_validexpertenzuteilung","cstringid":"menu.Validexpertenzuteilung","cicon":null,"crecht":"PKORG_VALIDEXPERTENZUTEILUNG","czielroute":"pkorg-validexpertzuteil","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Validexpert:innenzuteilung","nmenuid":1416163171,"notificationvalue":0},"children":[]},"15_auswertungen":{"value":{"cinternername":"main.15_system.15_auswertungen","cstringid":"menu.Auswertungen","cicon":null,"crecht":"AUSWERTUNGKATEGORIE_VIEW","czielroute":"verwaltung\/302\/list","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Auswertungen","nmenuid":150195038,"notificationvalue":0},"children":[]},"30_trenner":{"value":{"cinternername":"main.15_system.30_trenner","cstringid":"----","cicon":null,"crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"----","nmenuid":3755505167,"notificationvalue":0},"children":[]},"50_stammdaten":{"value":{"nmenuid":2580611953,"cinternername":"main.15_system.50_stammdaten","cstringid":"menu.Stammdaten","czielroute":"::child","crecht":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Stammdaten","notificationvalue":0},"children":{"500_stammdaten":{"value":{"nmenuid":3756770801,"cinternername":"main.15_system.50_stammdaten.500_stammdaten","cstringid":"menu.Stammdaten","czielroute":"pkorg-configuration","crecht":"PKORG_CONFIGURATION_EDIT","cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Stammdaten","notificationvalue":0},"children":[]},"501_schulklassen":{"value":{"nmenuid":2882486476,"cinternername":"main.15_system.50_stammdaten.501_schulklassen","cstringid":"menu.klassen","czielroute":"stammdaten\/klasse\/list","crecht":"KLASSEN_ADMIN","cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Schulklassen","notificationvalue":0},"children":[]},"503_dokument":{"value":{"nmenuid":2124974216,"cinternername":"main.15_system.50_stammdaten.503_dokument","cstringid":"menu.StammdokumentMandant","czielroute":"stammdokument-mandant","crecht":"MANDANT_STAMMDOKUMENTE_MANDANT_EDIT","cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Dokumentvorlagen","notificationvalue":0},"children":[]},"504_terms":{"value":{"nmenuid":752937460,"cinternername":"main.15_system.50_stammdaten.504_terms","cstringid":"menu.TermsAdmin","czielroute":"stammdaten\/terms","crecht":"ADRESSE_TERMS_ADMIN","cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Pr\u00fcfungsbestimmungen","notificationvalue":0},"children":[]},"505_reminders":{"value":{"nmenuid":3966444521,"cinternername":"main.15_system.50_stammdaten.505_reminders","cstringid":"menu.reminders","czielroute":"reminders","crecht":"PKORG_REMINDER_EDIT","cclientconfig":null,"nisdialog":null,"nstatus":1,"canzeigename":"Erinnerungen","notificationvalue":0},"children":[]},"505_supporttext":{"value":{"nmenuid":393184392,"cinternername":"main.15_system.50_stammdaten.505_supporttext","cstringid":"menu.Supporttext","czielroute":"supporttext-bearbeiten","crecht":"MANDANT_SUPPORTTEXT_BEARBEITEN","cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Supporttext bearbeiten","notificationvalue":0},"children":[]},"507_textbausteine":{"value":{"nmenuid":2805035998,"cinternername":"main.15_system.50_stammdaten.507_textbausteine","cstringid":"verwaltung.textbausteine","czielroute":"textbausteine","crecht":"VERWALTUNG_TEXTBAUSTEIN_EDIT","cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Textbausteine","notificationvalue":0},"children":[]},"515_treeeditor":{"value":{"nmenuid":2075416397,"cinternername":"main.15_system.50_stammdaten.515_treeeditor","cstringid":"menu.Treeeditor","czielroute":"tree-editor","crecht":"PKORG_TREEEDITOR","cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Tree-Editor","notificationvalue":0},"children":[]}}},"90_nutzungsanmeldung_trenner":{"value":{"cinternername":"main.15_system.90_nutzungsanmeldung_trenner","cstringid":"----","cicon":null,"crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"----","nmenuid":2630486972,"notificationvalue":0},"children":[]},"91_nutzungsanmeldungnutzungsanmeldung":{"value":{"nmenuid":3393186161,"cinternername":"main.15_system.91_nutzungsanmeldungnutzungsanmeldung","canzeigename":"Nutzungsanmeldung","czielroute":"nutzungsanmeldung","nisdialog":0,"nstatus":1,"notificationvalue":0},"children":[]}}}}'>
+        <li ng-if="showMinimizeSidebar()" role="menuitem">
+            <div class="navbar-minimize">
+    <button id="minimizeSidebar" class="btn btn-simple btn-info" ng-click="toggleNavigationLayout()" role="menuitem">
+        <i class="icon arrow_condense visible-on-sidebar-regular"></i>
+        <i class="icon arrow_expand_alt visible-on-sidebar-mini"></i>
+    </button>
+</div>        </li>
+        <li ng-repeat="block in ::blockData" ng-if="block.value.nstatus == 1">
+            <!-- top menu elements without children -->
+            <a ng-if="block.children == ''" href="/[[ block.value.czielroute ]]" title='[[ block.value.canzeigename ]]' aria-label="[[::block.value.canzeigename]]" role="menuitem">
+                <i ng-if="block.value.cicon" class="[[ block.value.cicon ]]" aria-hidden="true"></i>
+                <p ng-bind-html="::block.value.canzeigename" aria-hidden="true"></p>
+                <span ng-if="::block.value.notificationvalue > 0" class="notification" aria-hidden="true"><span>[[ ::block.value.notificationvalue ]]</span></span>
+            </a>
+
+            <!-- top menu element with sub-menu -->
+            <a ng-if="block.children" data-toggle="collapse" href="javascript:void(0);"
+               slide-toggle="#nmenuid-[[ block.value.nmenuid ]]" title='[[ block.value.canzeigename ]]' aria-label="[[::block.value.canzeigename]]" role="menuitem" aria-haspopup="true" aria-expanded="false">
+                <i ng-if="block.value.cicon != '' && block.value.cicon != null" class="[[ block.value.cicon ]]" aria-hidden="true"></i>
+                <p ng-bind-html="::block.value.canzeigename" aria-hidden="true"></p>
+                <b class="caret" aria-hidden="true"></b>
+                <span ng-if="::block.value.notificationvalue > 0" class="notification" aria-hidden="true"><span>[[ ::block.value.notificationvalue ]]</span></span>
+            </a>
+            <div ng-if="block.children" class="slideable collapse children"
+                                                    ng-class="(!navigation.small || navigation.mobile.open === 'right') ? 'in' : ''"
+                                 slideable-toggle="!navigation.small || navigation.mobile.open === 'right'" id="nmenuid-[[ block.value.nmenuid ]]">
+                <ul class="nav slideable_content" role="menu">
+                    <li ng-repeat="child in block.children" ng-class="{ divider: child.value.canzeigename === '----'}" ng-if="child.value.nstatus == 1">
+                        <a ng-if="child.value.canzeigename !== '----'" href="/[[ url(child) ]]" target="[[ ::child.value.ctarget ]]" aria-label="[[::child.value.canzeigename]]"
+                           uib-tooltip="[[ ::child.value.tooltip ]]" tooltip-placement="auto right" role="menuitem">
+                            [[ ::child.value.canzeigename ]]
+                            <i ng-if="child.value.cicon" class="[[ child.value.cicon ]]" aria-hidden="true"></i>
+                            <span ng-if="::child.value.notificationvalue > 0" class="notification notification-inline" aria-hidden="true">
+                                <span>[[ ::child.value.notificationvalue ]]</span>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        <li ng-if="showAtEnd">
+            <div class="navbar-minimize">
+    <button id="minimizeSidebar" class="btn btn-simple btn-info" ng-click="toggleNavigationLayout()" role="menuitem">
+        <i class="icon arrow_condense visible-on-sidebar-regular"></i>
+        <i class="icon arrow_expand_alt visible-on-sidebar-mini"></i>
+    </button>
+</div>        </li>
+    </ul>
+
+                    <div class="pkorg-navbar-mobile">
+                <input type="text" class="keyboard-shortcut-mobile mousetrap" placeholder="Tastenkombinationen">
+            </div>
+            </nav>
+</navigation>
+ </div>
+
+    <nav class="navbar navbar-default navbar-fixed">
+    <div class="container-fluid">
+        <button type="button" class="navbar-toggle navbar-toggle-left" ng-click="toggleMobileNav('left');" ng-class="navigation.mobile.open === 'left' ? 'toggled' : ''">
+            <i class="icon icon-lg icon-switch spin-overshoot"></i>
+        </button>
+        <h2 class="logo">
+            <a href="/" title='PKORG'>
+                <svg xmlns="http://www.w3.org/2000/svg" width="630.36" height="245.66" viewBox="0 0 630.36 245.66" class="logo-image">
+  <defs>
+    <style>
+      .a {
+        fill: #4f5959;
+      }
+
+      .grey-light {
+        fill: #bfc7c2;
+      }
+
+      .grey-dark {
+        fill: #a1abab;
+      }
+
+      .accent-green {
+        fill: #94c21f;
+      }
+
+      .accent-blue {
+        fill: #4fc2de;
+      }
+
+      .none {
+        fill: none;
+      }
+    </style>
+  </defs>
+  <title>PkOrg3 Bildmarke</title>
+  <path class="a" d="M28.39,209.66h0"/>
+  <g>
+    <path class="grey-light" d="M40.21,198.63a17.07,17.07,0,0,1-11.43,4.45H6.6V173.41H28.32a17.1,17.1,0,0,1,11.75,4.34,13.68,13.68,0,0,1,.11,20.87m-11.86-31.8h-25a3.38,3.38,0,0,0-3.3,3.3v72.24a3.3,3.3,0,0,0,6.59,0V209.57h21.8a.48.48,0,0,0,.18,0h1.1a23.4,23.4,0,0,0,15.49-6.65,20.23,20.23,0,0,0,.89-28.6q-.61-.64-1.27-1.23a23.3,23.3,0,0,0-16.48-6.27"/>
+    <path class="grey-light" d="M233.1,229.44a32.62,32.62,0,1,1,9.67-23.18,31.59,31.59,0,0,1-9.67,23.18m-23.18-62.57a39.38,39.38,0,1,0,27.85,11.54,38,38,0,0,0-27.85-11.54"/>
+    <path class="grey-light" d="M442.65,201.92a3.22,3.22,0,0,0-2.36-1H423.84a3.22,3.22,0,0,0-2.36,1,3,3,0,0,0-1,2.31,3.22,3.22,0,0,0,1,2.36,3.32,3.32,0,0,0,2.36.93H437v23.3a32.84,32.84,0,1,1-1.67-50.65,3.23,3.23,0,0,0,2.42.66,3.1,3.1,0,0,0,2.2-1.26,3,3,0,0,0,.66-2.47,3.25,3.25,0,0,0-1.26-2.2,38.43,38.43,0,0,0-24-8.13,39.44,39.44,0,1,0,26.59,68.61c.1-.1.61-.52.77-.68a3.13,3.13,0,0,0,.93-2.31V204.23a3.14,3.14,0,0,0-.93-2.31"/>
+    <path class="grey-light" d="M329.07,198.46a16.63,16.63,0,0,1-11.37,4.39h-22V173.47h21.62A16.83,16.83,0,0,1,329,177.81a13.55,13.55,0,0,1,.11,20.65m5.71,3.46a20,20,0,0,0-.72-28.28l-.49-.45A23.19,23.19,0,0,0,317.32,167H292.43a3.25,3.25,0,0,0-2.31.93,3.13,3.13,0,0,0-.93,2.31v71.63a3.19,3.19,0,0,0,3.14,3.24h.1a3.28,3.28,0,0,0,3.3-3.24V209.39h18.35l17,34.44a3,3,0,0,0,2.91,1.81,3.14,3.14,0,0,0,1.43-.33,3.18,3.18,0,0,0,1.65-1.87,3.07,3.07,0,0,0-.16-2.47l-15.69-31.91a22.49,22.49,0,0,0,13.57-7.14"/>
+    <path class="grey-light" d="M108.65,205.77l31.58-33.2a3.13,3.13,0,0,0,.88-2.36,3,3,0,0,0-1-2.25,3.32,3.32,0,0,0-2.36-.93,3.18,3.18,0,0,0-2.25,1L94.32,211.37V170a3.28,3.28,0,0,0-3.3-3.24,3.19,3.19,0,0,0-3.24,3.14s0,.07,0,.1v71.8A3.29,3.29,0,0,0,91,245.12a3.38,3.38,0,0,0,3.3-3.3v-21l9.78-10.33,32.46,34.17a3.23,3.23,0,0,0,2.36,1,3.17,3.17,0,0,0,2.25-.88,3.24,3.24,0,0,0,1-2.31,3.14,3.14,0,0,0-.93-2.31Z"/>
+  </g>
+  <path class="grey-dark el" id="e1" d="M432.32,138.57a13.5,13.5,0,0,1-13.5-13.5h0V125a13.5,13.5,0,0,1,27,0v.13a13.5,13.5,0,0,1-13.5,13.49"/>
+  <path class="accent-green el" id="e2" d="M469.23,138.57a13.5,13.5,0,0,1-13.5-13.5h0V59.19a13.5,13.5,0,1,1,27,0h0v65.92a13.5,13.5,0,0,1-13.5,13.5"/>
+  <path class="grey-dark el" id="e3" d="M506.14,217.06a13.5,13.5,0,0,1-13.5-13.5V13.5a13.5,13.5,0,0,1,27,0V203.57a13.5,13.5,0,0,1-13.5,13.5"/>
+  <path class="accent-blue el" id="e4" d="M543,242.34a13.5,13.5,0,0,1-13.5-13.5h0V59.19a13.5,13.5,0,1,1,27,0h0V228.84a13.5,13.5,0,0,1-13.5,13.5h0"/>
+  <path class="grey-light el" id="e5" d="M580,158a13.5,13.5,0,0,1-13.5-13.5V105.75a13.5,13.5,0,0,1,27,0v38.72A13.5,13.5,0,0,1,580,158"/>
+  <path class="grey-light el" id="e6" d="M616.86,138.57a13.5,13.5,0,0,1-13.5-13.5h0V125a13.5,13.5,0,0,1,27,0v.13a13.5,13.5,0,0,1-13.5,13.5h0"/>
+  <rect class="none el" id="e" width="630.36" height="245.66"/>
+</svg>
+
+            </a>
+        </h2>
+        <span></span>
+        <button type="button" id="mobile-navbar-toggle" class="navbar-toggle" ng-click="toggleMobileNav('right');" ng-class="navigation.mobile.open === 'right' ? 'toggled' : ''">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+                    </button>
+        <div class="pkorg-navbar collapse navbar-collapse">
+            <ul class="nav navbar-nav navbar-left ng-cloak">
+                                    <!-- Mandant-Teil -->
+                    
+                                            <div class="navbar-role-wrapper" ng-double-copy="currentAff.client + ' ' + currentAff.role">
+                            <strong><i class="icon icon-lg icon-switch"></i></strong>
+                            <strong class="rollen-text">[[::'Rollen'|trans]]</strong>
+                        </div>
+                        <li class="dropdown nav-li-mandant" title="[[::'role_client_long'| trans : { label_role_long : (currentAff.role + '_long' | trans), label_client_long: ('client_long'| trans) }]]" ng-class='currentAff.loading ? "loading" : ""' uib-dropdown ng-disabled="currentAff.loading">
+                                                                                                                                        <a href="#" class="rolle-button"
+                                           ng-double-copy="currentAff.client + ' ' + currentAff.role"
+                                           title="Chefexpert:in in Informatiker/-in Applikationsentwicklung Schweiz"
+                                           uib-dropdown-toggle ng-disabled="currentAff.loading">
+                                                                                        <strong>CEX</strong> - Inf Api CH
+                                            <b class="caret"></b>                                        </a>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <ul class="dropdown-menu" uib-dropdown-menu>
+                                                                            <li>
+                                                                                        <a class="mandantSwitch"
+                                               href="#"
+                                               title="Chefexpert:in in Informatiker/-in Applikationsentwicklung Schweiz"
+                                               ng-class='isCurrentAff({"client":"Inf Api CH neu","role":"CEX","label_role":"CEX","label_client":"Inf Api CH"}) ? "active" : ""'
+                                               ng-double-copy="'Inf Api CH neu CEX'"
+                                               ng-click='switchAffiliation({"client":"Inf Api CH neu","role":"CEX","label_role":"CEX","label_client":"Inf Api CH"})'>
+                                                <strong>CEX</strong> Inf Api CH
+                                                <i ng-show='isSwitchingTo({"client":"Inf Api CH neu","role":"CEX","label_role":"CEX","label_client":"Inf Api CH"})'
+                                                   class="icon icon-spinner icon-pulse icon-color-info"></i>
+                                            </a>
+                                        </li>
+                                                                                                                    <li>
+                                                                                        <a class="mandantSwitch"
+                                               href="#"
+                                               title="Chefexpert:in in Informatiker/-in (Plattformentwicklung) EFZ CH"
+                                               ng-class='isCurrentAff({"client":"Inf Platt CH","role":"CEX","label_role":"CEX","label_client":"Inf Platt CH"}) ? "active" : ""'
+                                               ng-double-copy="'Inf Platt CH CEX'"
+                                               ng-click='switchAffiliation({"client":"Inf Platt CH","role":"CEX","label_role":"CEX","label_client":"Inf Platt CH"})'>
+                                                <strong>CEX</strong> Inf Platt CH
+                                                <i ng-show='isSwitchingTo({"client":"Inf Platt CH","role":"CEX","label_role":"CEX","label_client":"Inf Platt CH"})'
+                                                   class="icon icon-spinner icon-pulse icon-color-info"></i>
+                                            </a>
+                                        </li>
+                                                                                                                    <li class="dividing-element">
+                                                                                        <a class="mandantSwitch"
+                                               href="#"
+                                               title="Validexpert:in in Informatiker/-in Applikationsentwicklung Schweiz"
+                                               ng-class='isCurrentAff({"client":"Inf Api CH neu","role":"VEX","label_role":"VEX","label_client":"Inf Api CH"}) ? "active" : ""'
+                                               ng-double-copy="'Inf Api CH neu VEX'"
+                                               ng-click='switchAffiliation({"client":"Inf Api CH neu","role":"VEX","label_role":"VEX","label_client":"Inf Api CH"})'>
+                                                <strong>VEX</strong> Inf Api CH
+                                                <i ng-show='isSwitchingTo({"client":"Inf Api CH neu","role":"VEX","label_role":"VEX","label_client":"Inf Api CH"})'
+                                                   class="icon icon-spinner icon-pulse icon-color-info"></i>
+                                            </a>
+                                        </li>
+                                                                                                                    <li class="dividing-element">
+                                                                                        <a class="mandantSwitch"
+                                               href="#"
+                                               title="Expert:in in Informatiker/-in Applikationsentwicklung Schweiz"
+                                               ng-class='isCurrentAff({"client":"Inf Api CH neu","role":"EXP","label_role":"EXP","label_client":"Inf Api CH"}) ? "active" : ""'
+                                               ng-double-copy="'Inf Api CH neu EXP'"
+                                               ng-click='switchAffiliation({"client":"Inf Api CH neu","role":"EXP","label_role":"EXP","label_client":"Inf Api CH"})'>
+                                                <strong>EXP</strong> Inf Api CH
+                                                <i ng-show='isSwitchingTo({"client":"Inf Api CH neu","role":"EXP","label_role":"EXP","label_client":"Inf Api CH"})'
+                                                   class="icon icon-spinner icon-pulse icon-color-info"></i>
+                                            </a>
+                                        </li>
+                                                                                                                    <li class="dividing-element">
+                                                                                        <a class="mandantSwitch"
+                                               href="#"
+                                               title="Berufsbildner:in in Informatiker/-in Applikationsentwicklung Schweiz"
+                                               ng-class='isCurrentAff({"client":"Inf Api CH neu","role":"BB","label_role":"BB","label_client":"Inf Api CH"}) ? "active" : ""'
+                                               ng-double-copy="'Inf Api CH neu BB'"
+                                               ng-click='switchAffiliation({"client":"Inf Api CH neu","role":"BB","label_role":"BB","label_client":"Inf Api CH"})'>
+                                                <strong>BB</strong> Inf Api CH
+                                                <i ng-show='isSwitchingTo({"client":"Inf Api CH neu","role":"BB","label_role":"BB","label_client":"Inf Api CH"})'
+                                                   class="icon icon-spinner icon-pulse icon-color-info"></i>
+                                            </a>
+                                        </li>
+                                                                                                                                                </ul>
+                                                    </li>
+                                                </ul>
+            <div class="navbar-pull-right">
+                <!-- Language-Teil -->
+                
+                                    <ul class="nav navbar-nav navbar-lang">
+                                                    <li class="active nav-li-lang">
+                                <a href="/lang/de" title='Deutsch'>
+                                    D
+                                </a>
+                            </li>
+                                            </ul>
+                                <!-- Zeitsimulation -->
+                                                    <ul class="nav navbar-nav navbar-user">
+                        <!-- User Menu -->
+                        
+                        <li class="dropdown nav-li-user dropdown-with-icons" uib-dropdown>
+                            <a href="/time/reset" uib-dropdown-toggle data-toggle="collapse"
+                               class="usermenu-toggle ">
+                                <span class="avatar" style="background-image: url(/themes/pkorg/img/default_avatar.svg);"></span>
+                                <span class="username" ng-double-copy=""D M"">
+                                    D M
+                                                                        <b class="caret"></b>
+                                </span>
+                            </a>
+                                <ul class="dropdown-menu dropdown-with-icons ng-cloak" meta-navigation data-metablock='{"01_meinenachrichtennotifications":{"value":{"cinternername":"user.01_meinenachrichtennotifications","canzeigename":"Nachrichten","czielroute":"notifications","nstatus":1,"cicon":"icon icon_mail_alt","notificationvalue":0,"nmenuid":1270603634},"children":[]},"02_meinedaten":{"value":{"cinternername":"user.02_meinedaten","cstringid":"menu.Profil","cicon":"icon icon_id","crecht":null,"czielroute":"meine-daten","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Profil","nmenuid":4062109319,"notificationvalue":0},"children":[]},"03_calendar":{"value":{"cinternername":"user.03_calendar","cstringid":"menu.Kalender","cicon":"icon icon_calendar","crecht":null,"czielroute":"termine","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Kalender","nmenuid":1891448653,"notificationvalue":0},"children":[]},"06_tracticket":{"value":{"cinternername":"user.06_tracticket","cstringid":"menu.tracTicket","cicon":"icon icon-ticket","crecht":"TRAC_VIEW","czielroute":"support\/tickets","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Ticketsystem","nmenuid":540793380,"notificationvalue":0},"children":[]},"10_divider":{"value":{"cinternername":"user.10_divider","cstringid":"----","cicon":null,"crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"----","nmenuid":3618020507,"notificationvalue":0},"children":[]},"11_support":{"value":{"cinternername":"user.11_support","cstringid":"menu.Support","cicon":"icon icon_question","crecht":null,"czielroute":"support","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":1,"nstatus":1,"canzeigename":"Support","nmenuid":1414843279,"notificationvalue":0},"children":[]},"12_ersteschritte":{"value":{"cinternername":"user.12_ersteschritte","cstringid":"menu.ErsteSchritte","cicon":"icon icon-info","crecht":"PKORG_ONBOARDING","czielroute":"template\/pkorg-onboarding.html","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Erste Schritte","nmenuid":4045454223,"notificationvalue":0},"children":[]},"13_nutzungsbestimmungen":{"value":{"cinternername":"user.13_nutzungsbestimmungen","cstringid":"menu.Nutzungsbestimmungen","cicon":"icon icon-info","crecht":null,"czielroute":"terms","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Pr\u00fcfungsbestimmungen","nmenuid":1338677904,"notificationvalue":0},"children":[]},"14_ueberpkorg":{"value":{"cinternername":"user.14_ueberpkorg","cstringid":"menu.UeberPkorg","cicon":"icon icon-info","crecht":null,"czielroute":"ueberpkorg","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":1,"nstatus":1,"canzeigename":"\u00dcber PkOrg","nmenuid":595835124,"notificationvalue":0},"children":[]}}'>
+        <li ng-repeat="metablock in ::metablockData" ng-class="metablock.value.canzeigename==='----' ? 'divider' : ''" ng-if="metablock.value.nstatus == 1" class="[[ metablock.value.cstyleclass ]]">
+
+            <!-- Show normal link if dialog-flag not set -->
+            <a class="[[ metablock.value.cstyleclass ]]" ng-if="!metablock.value.nisdialog" href="/[[ metablock.value.czielroute ]]" title="[[ metablock.value.canzeigename ]]">
+                <i class="[[ metablock.value.cicon ]]"></i> [[ metablock.value.canzeigename ]]
+                <span ng-if="metablock.value.notificationvalue > 0" class="notification notification-inline"><span>[[ metablock.value.notificationvalue ]]</span></span>
+            </a>
+
+            <!-- Show dialog if dialog-flag is set -->
+            <a class="[[ metablock.value.cstyleclass ]]" ng-if="metablock.value.nisdialog == 1" iv-dialog="" href="/[[ metablock.value.czielroute ]]" title="[[ metablock.value.canzeigename ]]">
+                <i class="[[ metablock.value.cicon ]]"></i> [[ metablock.value.canzeigename ]]
+                <span ng-if="metablock.value.notificationvalue > 0" class="notification notification-inline"><span>[[ metablock.value.notificationvalue ]]</span></span>
+            </a>
+
+            <!-- Show dialog if dialog-flag is set -->
+            <a class="[[ metablock.value.cstyleclass ]]" ng-if="metablock.value.nisdialog == 2" iv-ng-dialog href="/[[ metablock.value.czielroute ]]" title="[[ metablock.value.canzeigename ]]">
+                <i class="[[ metablock.value.cicon ]]"></i> [[ metablock.value.canzeigename ]]
+                <span ng-if="metablock.value.notificationvalue > 0" class="notification notification-inline"><span>[[ metablock.value.notificationvalue ]]</span></span>
+            </a>
+        </li>
+    </ul>
+
+                        </li>
+                        <!-- Logout Button -->
+                        <li class="nav-li-logout">
+                            <a href
+                               ng-click="logout('/logout')"
+                               title="Abmelden"
+                               class="logout-link">
+                                <i class="icon icon-power-off icon-navbar-large"></i>
+                                <p class="hidden-md hidden-lg">Abmelden</p>
+                            </a>
+                        </li>
+                    </ul>
+                            </div>
+
+        </div>
+    </div>
+</nav>
+
+
+    <div class="main-panel">
+        <main class="content">
+            <div class="container-fluid">
+                                                
+                <script>var third_level_navigation = {"03_dokumente":{"value":{"cinternername":"main.03_dokumente","cstringid":"menu.Dokumente","cicon":"icon icon-file-text-o","crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Dokumente","nmenuid":1798540571,"notificationvalue":3},"children":{"01_dokumentenbereichbearbeiten":{"value":{"cinternername":"main.03_dokumente.01_dokumentenbereichbearbeiten","cstringid":"menu.Dokumentenbereich","cicon":null,"crecht":"VERWALTUNG_DOKUMENTKATEGORIE_EDIT","czielroute":"dokumentkategorie\/list","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Dokumentenbereich bearbeiten","nmenuid":2401777393,"notificationvalue":0},"children":[]},"06_dokumentenkategorienAllgemeine Informationen zur IPA 2026":{"value":{"nmenuid":3088200802,"cinternername":"main.03_dokumente.06_dokumentenkategorienAllgemeine Informationen zur IPA 2026","canzeigename":"Allgemeine Informationen zur IPA 2026","crecht":"VERWALTUNG_DOKUMENT_VIEW","czielroute":"dokument\/2149\/view","notificationvalue":3,"nisdialog":2,"nstatus":1},"children":[]},"06_dokumentenkategorienUnterlagen & Informationen":{"value":{"nmenuid":2776881063,"cinternername":"main.03_dokumente.06_dokumentenkategorienUnterlagen & Informationen","canzeigename":"Unterlagen & Informationen","crecht":"VERWALTUNG_DOKUMENT_VIEW","czielroute":"dokument\/2436\/view","notificationvalue":0,"nisdialog":2,"nstatus":1},"children":[]}}},"05_angeboteumfragen":{"value":{"cinternername":"main.05_angeboteumfragen","cstringid":"menu.Angebote","cicon":"icon icon-pencil-square-o","crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":null,"nstatus":1,"canzeigename":"Angebote","nmenuid":2952426218,"notificationvalue":0},"children":{"01_veranstaltungenbearbeiten":{"value":{"cinternername":"main.05_angeboteumfragen.01_veranstaltungenbearbeiten","cstringid":"menu.Veranstaltungenbearbeiten","cicon":null,"crecht":"VERANSTALTUNG_VERANSTALTUNG_EDIT","czielroute":"veranstaltung\/list","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":null,"nstatus":1,"canzeigename":"Veranstaltungen bearbeiten","nmenuid":3784098185,"notificationvalue":0},"children":[]},"02_veranstaltungenkurseVeranstaltungen":{"value":{"nmenuid":3377070531,"cinternername":"main.05_angeboteumfragen.02_veranstaltungenkurseVeranstaltungen","canzeigename":"Veranstaltungen","crecht":"VERANSTALTUNG_VERANSTALTUNG_VIEW","czielroute":"veranstaltung\/anmeldungen","notificationvalue":0,"nisdialog":2,"nstatus":1},"children":[]},"03_umfragenadmin":{"value":{"cinternername":"main.05_angeboteumfragen.03_umfragenadmin","cstringid":"menu.UmfragenAdmin","cicon":null,"crecht":"SURVEY_ADMIN","czielroute":"umfragen\/admin","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Umfragen bearbeiten","nmenuid":7342864,"notificationvalue":0},"children":[]},"04_umfragenUmfragen":{"value":{"nmenuid":4281043131,"cinternername":"main.05_angeboteumfragen.04_umfragenUmfragen","canzeigename":"Umfragen","czielroute":"umfragen","notificationvalue":0,"nisdialog":0,"nstatus":1},"children":[]}}},"15_system":{"value":{"cinternername":"main.15_system","cstringid":"menu.System","cicon":"icon icon-cog","crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"System","nmenuid":2252471636,"notificationvalue":0},"children":{"01_dashboard":{"value":{"cinternername":"main.15_system.01_dashboard","cstringid":"menu.Dashboard","cicon":null,"crecht":"PKORG_DASHBOARD_VIEW","czielroute":"dashboard","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Dashboard","nmenuid":2792331512,"notificationvalue":0},"children":[]},"02_barcode0":{"value":{"nmenuid":1341156691,"cinternername":"main.15_system.02_barcode0","canzeigename":"Barcodeleser","crecht":"BARCODE_READER","czielroute":"barcode","nisdialog":0,"nstatus":1,"notificationvalue":0},"children":[]},"03_notenexport":{"value":{"cinternername":"main.15_system.03_notenexport","cstringid":"menu.Notenexport","cicon":null,"crecht":"PKORG_NOTENEXPORT","czielroute":"notenexport","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Notenexport","nmenuid":3888141549,"notificationvalue":0},"children":[]},"04_trenner":{"value":{"cinternername":"main.15_system.04_trenner","cstringid":"----","cicon":null,"crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"----","nmenuid":1761844224,"notificationvalue":0},"children":[]},"05_benutzerverwaltung":{"value":{"cinternername":"main.15_system.05_benutzerverwaltung","cstringid":"menu.Benutzerverwaltung","cicon":null,"crecht":"PERSON_VIEW","czielroute":"benutzerverwaltung","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Benutzerverwaltung","nmenuid":646916107,"notificationvalue":0},"children":[]},"06_poolmove":{"value":{"cinternername":"main.15_system.06_poolmove","cstringid":"menu.poolmove","cicon":null,"crecht":"PKORG_CONFIGURATION_EDIT","czielroute":"pool\/move","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":null,"nstatus":1,"canzeigename":"Kandidat:innen verschieben","nmenuid":3373319477,"notificationvalue":0},"children":[]},"10_expertenteamverwaltung":{"value":{"cinternername":"main.15_system.10_expertenteamverwaltung","cstringid":"menu.Expertenteam","cicon":null,"crecht":"PKORG_EXPERTENTEAM_EDIT","czielroute":"pkorg-expertteam","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Expert:innen Teams","nmenuid":925094313,"notificationvalue":0},"children":[]},"11_validexpertenzuteilung":{"value":{"cinternername":"main.15_system.11_validexpertenzuteilung","cstringid":"menu.Validexpertenzuteilung","cicon":null,"crecht":"PKORG_VALIDEXPERTENZUTEILUNG","czielroute":"pkorg-validexpertzuteil","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Validexpert:innenzuteilung","nmenuid":1416163171,"notificationvalue":0},"children":[]},"15_auswertungen":{"value":{"cinternername":"main.15_system.15_auswertungen","cstringid":"menu.Auswertungen","cicon":null,"crecht":"AUSWERTUNGKATEGORIE_VIEW","czielroute":"verwaltung\/302\/list","cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Auswertungen","nmenuid":150195038,"notificationvalue":0},"children":[]},"30_trenner":{"value":{"cinternername":"main.15_system.30_trenner","cstringid":"----","cicon":null,"crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"----","nmenuid":3755505167,"notificationvalue":0},"children":[]},"50_stammdaten":{"value":{"nmenuid":2580611953,"cinternername":"main.15_system.50_stammdaten","cstringid":"menu.Stammdaten","czielroute":"::child","crecht":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Stammdaten","notificationvalue":0},"children":{"500_stammdaten":{"value":{"nmenuid":3756770801,"cinternername":"main.15_system.50_stammdaten.500_stammdaten","cstringid":"menu.Stammdaten","czielroute":"pkorg-configuration","crecht":"PKORG_CONFIGURATION_EDIT","cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Stammdaten","notificationvalue":0},"children":[]},"501_schulklassen":{"value":{"nmenuid":2882486476,"cinternername":"main.15_system.50_stammdaten.501_schulklassen","cstringid":"menu.klassen","czielroute":"stammdaten\/klasse\/list","crecht":"KLASSEN_ADMIN","cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Schulklassen","notificationvalue":0},"children":[]},"503_dokument":{"value":{"nmenuid":2124974216,"cinternername":"main.15_system.50_stammdaten.503_dokument","cstringid":"menu.StammdokumentMandant","czielroute":"stammdokument-mandant","crecht":"MANDANT_STAMMDOKUMENTE_MANDANT_EDIT","cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Dokumentvorlagen","notificationvalue":0},"children":[]},"504_terms":{"value":{"nmenuid":752937460,"cinternername":"main.15_system.50_stammdaten.504_terms","cstringid":"menu.TermsAdmin","czielroute":"stammdaten\/terms","crecht":"ADRESSE_TERMS_ADMIN","cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"Pr\u00fcfungsbestimmungen","notificationvalue":0},"children":[]},"505_reminders":{"value":{"nmenuid":3966444521,"cinternername":"main.15_system.50_stammdaten.505_reminders","cstringid":"menu.reminders","czielroute":"reminders","crecht":"PKORG_REMINDER_EDIT","cclientconfig":null,"nisdialog":null,"nstatus":1,"canzeigename":"Erinnerungen","notificationvalue":0},"children":[]},"505_supporttext":{"value":{"nmenuid":393184392,"cinternername":"main.15_system.50_stammdaten.505_supporttext","cstringid":"menu.Supporttext","czielroute":"supporttext-bearbeiten","crecht":"MANDANT_SUPPORTTEXT_BEARBEITEN","cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Supporttext bearbeiten","notificationvalue":0},"children":[]},"507_textbausteine":{"value":{"nmenuid":2805035998,"cinternername":"main.15_system.50_stammdaten.507_textbausteine","cstringid":"verwaltung.textbausteine","czielroute":"textbausteine","crecht":"VERWALTUNG_TEXTBAUSTEIN_EDIT","cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Textbausteine","notificationvalue":0},"children":[]},"515_treeeditor":{"value":{"nmenuid":2075416397,"cinternername":"main.15_system.50_stammdaten.515_treeeditor","cstringid":"menu.Treeeditor","czielroute":"tree-editor","crecht":"PKORG_TREEEDITOR","cclientconfig":null,"nisdialog":2,"nstatus":1,"canzeigename":"Tree-Editor","notificationvalue":0},"children":[]}}},"90_nutzungsanmeldung_trenner":{"value":{"cinternername":"main.15_system.90_nutzungsanmeldung_trenner","cstringid":"----","cicon":null,"crecht":null,"czielroute":null,"cmenuentryexpander":null,"cclientconfig":null,"nisdialog":0,"nstatus":1,"canzeigename":"----","nmenuid":2630486972,"notificationvalue":0},"children":[]},"91_nutzungsanmeldungnutzungsanmeldung":{"value":{"nmenuid":3393186161,"cinternername":"main.15_system.91_nutzungsanmeldungnutzungsanmeldung","canzeigename":"Nutzungsanmeldung","czielroute":"nutzungsanmeldung","nisdialog":0,"nstatus":1,"notificationvalue":0},"children":[]}}}};</script>
+<div ng-controller="ThirdLevelNavigationCtrl">
+    <ul id="nav-third-level" ng-if="data !== null" ng-cloak>
+        <li ng-repeat="item in data" ng-class="{ current: item.value.czielroute.indexOf(current) === 0}">
+            <a href="/[[ item.value.czielroute ]]">
+                <i ng-if="item.value.cicon" ng-class="::item.value.cicon"></i>
+                [[ ::item.value.canzeigename ]]
+                <span ng-if="::item.value.notificationvalue" class="notification">[[ ::item.value.notificationvalue ]]</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+                <div class="card info">
+    <div class="header">Willkommen!</div>
+    <div class="content">Wählen Sie links die gewünschte Funktion!</div>
+</div>
+
+<div class="uebersicht-boxes">
+        <div class="card info">
+        <div class="header">
+            <div class="header-content">
+                Wir suchen Verstärkung
+                            </div>
+        </div>
+        <div class="content"><p><strong>Möchtest du die digitale Zukunft im Bildungsbereich aktiv mitgestalten?</strong><br><br>Wir suchen Verstärkung im Entwicklungsteam als <strong>Full-Stack Developer</strong>.</p>
+<p>Hier findest du unser aktuelles&nbsp;<a href="https://www.ivaris.ch/ueber-uns/stellenangebote/" target="_blank">Stellenangebot</a>.</p></div>
+    </div>
+        <div class="card warning">
+        <div class="header">
+            <div class="header-content">
+                Systemumstellung
+                            </div>
+        </div>
+        <div class="content"><!--StartFragment-->Bitte beachten Sie, dass PkOrg vom <strong>01. September bis zum 3. September 2026</strong>&nbsp;infolge des Wechsels in das neue Prüfungsjahr nicht zur Verfügung steht.<br><br>Ihr PkOrg-Team<br><!--EndFragment--></div>
+    </div>
+        <div class="card info">
+        <div class="header">
+            <div class="header-content">
+                Einrichten von TOTP (2-Faktor Authentisierung)
+                            </div>
+        </div>
+        <div class="content"><!--StartFragment--><p><strong>Video für Expertinnen und Experten: Einrichten von 2-Faktor Authentisierung</strong><br>Wir haben ein Video erstellt, welchen Sie nun auch Ihren Expertinnen und Experten zur Verfügung stellen können:</p>
+<p><div class="video-container"><iframe src="https://player.vimeo.com/video/878733920" frameborder="0" allowfullscreen></iframe></div></p>
+<p><strong>Hinweis</strong><br>Wenn Sie das Video als Link versenden möchten, verwenden Sie bitte diesen Link:</p>
+<p><!--StartFragment--><a href="https://vimeo.com/809752118">https://vimeo.com/809752118</a><!--EndFragment--><!--EndFragment--></p>
+<!--StartFragment--><!--EndFragment--></div>
+    </div>
+        <div class="card info">
+        <div class="header">
+            <div class="header-content">
+                Handy-Applikation für iOS & Android verfügbar!
+                            </div>
+        </div>
+        <div class="content"><p><strong>Die iPhone- und Android-App ist ab sofort verfügbar.</strong></p>
+<p></p>
+<div class="row">
+ <div class="col-sm-6">
+ <figure><img src="/img/static/app/app-store-qr.png" style="max-width: 100%" data-image="vku0ykp5spek"></figure>
+ <p></p>
+ <figure><lt-highlighter contenteditable="false" data-lt-linked="1" style="display: none; z-index: 1 !important;"><lt-div spellcheck="false" class="lt-highlighter__wrapper" style="width: 0px !important; height: 21px !important; transform: none !important; transform-origin: 0px 10.5px !important; zoom: 1 !important; margin-left: -9999px !important;"><lt-div class="lt-highlighter__scroll-element" style="top: 0px !important; left: 0px !important; width: 0px !important; height: 21px !important;"></lt-div></lt-div></lt-highlighter><a href="https://appstore.com/pkorg" target="_blank"><img src="/img/static/app/app-store-badge.png" alt="Laden im App Store" style="height: 40px" data-image="5qm81km3eb71"></a></figure>
+ </div>
+ <div class="col-sm-6">
+ <figure><img src="/img/static/app/play-store-qr.png" style="max-width: 100%" data-image="vku0ykp5spek">
+ </figure>
+ <p></p>
+ <figure><a href="https://play.google.com/store/apps/details?id=ch.ivaris.pkorg"><img alt="Jetzt bei Google Play" style="height: 40px" src="/img/static/app/play-store-badge.png" data-image="cmsg6vfltbo4"></a>
+ </figure>
+ </div>
+</div>
+<p></p>
+<p><strong>Hinweis</strong><br>Die Applikation funktioniert auch für PkOrg der PK99 und Validorg! Die iOS-App kann auch auf
+ Macs mit M1-Prozessor eingesetzt werden.</p></div>
+    </div>
+        <div class="card error">
+        <div class="header">
+            <div class="header-content">
+                PkOrg aus dem Ausland
+                            </div>
+        </div>
+        <div class="content"><p><strong>Aus Sicherheitsgründen ist der Zugang auf PkOrg aus den meisten Ländern (ausser den USA und den umliegenden Ländern) gesperrt. Damit können wir schon den grossen Teil von Störversuchen von Hackern abwehren.</strong></p>
+<p>Es ist aber trotzdem einfach möglich aus dem Ausland zuzugreifen, indem Nutzende für sich einen VPN-Zugang bei einem Anbieter (vorzugsweise aus der Schweiz) einrichten. Dann kann ohne Probleme mit unseren Produkten gearbeitet werden.</p>
+<ul>
+<li>Möglicher Anbieter von VPN: <a href="https://protonvpn.com" target="extern">ProtonVPN</a></li></ul></div>
+    </div>
+        <div class="card tools">
+        <div class="header">
+            <div class="header-content">
+                Status-Informationen
+                            </div>
+        </div>
+        <div class="content"><ul>
+ <li><strong>Wo finden Sie Status-Informationen zum Betrieb unserer Systeme?</strong><br>
+ Generell publizieren wir Betriebsstörungen so schnell als möglich auf unserer Status-Seite. Sie können diese Informationen jederzeit abrufen:<br>
+ <a href="https://status.ivaris.ch/" target="_blank">https://status.ivaris.ch</a><br><br>
+ </li>
+ <li><strong>Informationen zu Last der PkOrg-Server finden Sie hier:</strong><br>
+ <a href="https://status.pkorg.ch" target="_blank">https://status.pkorg.ch</a><br>
+ </li>
+ </ul></div>
+    </div>
+        <div class="card warning">
+        <div class="header">
+            <div class="header-content">
+                Passwort für Beta + Mailsystem
+                            </div>
+        </div>
+        <div class="content"><p><strong style="color: red">Wichtiger Hinweis:</strong></p><p>Aus Datenschutzgründen sind das Beta-System und mail.irgendwo.ag ab sofort nur noch mit Passwort zugänglich.</p><p>Die Zugangsdaten lauten:<strong><br>Benutzername:</strong>&nbsp;<code>cex</code><strong><br>Passwort:</strong>&nbsp;<code>Y8cMWtHgl2qs</code><br></p></div>
+    </div>
+    </div>
+
+            </div>
+        </main>
+
+        <footer class='footer footer-transparent clearfix'>
+    <p class='copyright'>
+                © 2025 - ein Produkt für die Berufsbildung der <a href="https://www.ivaris.ch/"> GRÜN Ivaris AG</a> | <a href="/verwaltung/999/40">Impressum</a> | PkOrg 3 Version 12.5.4-21a4cc0
+        | 2026-host1
+                <session-timeout></session-timeout>
+    </p>
+</footer>
+    </div>
+
+    <div class="page-disabler" ng-if="page.disable"></div>
+</div>
+<script type="text/javascript">
+    if (navigator.appName.indexOf("Internet Explorer") != -1 || navigator.userAgent.match(/Trident.*rv[ :]*11\./))
+        window.location = "oldbrowser.html";
+</script>
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="pswp__bg"></div>
+    <div class="pswp__scroll-wrap">
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

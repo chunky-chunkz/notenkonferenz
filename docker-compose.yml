@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: notenkonferenz
+      MYSQL_USER: nkuser
+      MYSQL_PASSWORD: nkpassword
+    ports:
+      - '3307:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: mysql://nkuser:nkpassword@mysql:3306/notenkonferenz
+      REDIS_URL: redis://redis:6379
+      SESSION_SECRET: change-me-in-production-use-a-random-64-char-string
+      CORS_ORIGIN: http://localhost:5173
+      PKORG_BASE_URL: https://pk19.ch
+      UPLOAD_DIR: /app/uploads
+      MEDIA_DIR: /app/media
+    volumes:
+      - uploads_data:/app/uploads
+      - media_data:/app/media
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: node dist/worker.js
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: mysql://nkuser:nkpassword@mysql:3306/notenkonferenz
+      REDIS_URL: redis://redis:6379
+      PKORG_BASE_URL: https://pk19.ch
+      UPLOAD_DIR: /app/uploads
+      MEDIA_DIR: /app/media
+    volumes:
+      - uploads_data:/app/uploads
+      - media_data:/app/media
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    depends_on:
+      - api
+
+volumes:
+  mysql_data:
+  redis_data:
+  uploads_data:
+  media_data:

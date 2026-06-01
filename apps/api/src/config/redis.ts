@@ -1,8 +1,17 @@
 import Redis from 'ioredis';
 import { env } from './env.js';
 
-export const redis = new Redis(env.REDIS_URL, {
-  maxRetriesPerRequest: null, // required for BullMQ
-});
+function makeRedis(options: ConstructorParameters<typeof Redis>[1] = {}): Redis {
+  const client = new Redis(env.REDIS_URL, {
+    enableOfflineQueue: false,
+    ...options,
+  });
+  client.on('error', (err: Error) => {
+    console.warn('[Redis] connection error (non-fatal):', err.message);
+  });
+  return client;
+}
 
-export const sessionRedis = new Redis(env.REDIS_URL);
+// BullMQ requires maxRetriesPerRequest: null
+export const redis = makeRedis({ maxRetriesPerRequest: null });
+export const sessionRedis = makeRedis();

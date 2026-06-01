@@ -140,6 +140,64 @@ docker compose logs -f api worker
 - `GET  /api/files/missing-portfolios` – List missing portfolios
 - `POST /api/files/missing-portfolios` – Upload missing portfolio ZIP
 
+## Render Deployment
+
+Deploy the API and Web as two separate Docker Web Services on Render Free.
+There is no Background Worker on Render Free — import/download jobs require Redis and a worker process, which is only available in the local Docker Compose setup.
+
+### Prerequisites
+
+- An external MySQL database (e.g. PlanetScale, Railway, Aiven, or any host with a public connection string).
+  The docker-compose value `mysql://nkuser:nkpassword@mysql:3306/notenkonferenz` **only works locally** and will not work on Render.
+- Optional: an external Redis instance (e.g. Upstash, Railway). Without Redis, sessions fall back to in-memory and import/download jobs are unavailable. The API will still start.
+
+---
+
+### Step 1 — Deploy API Web Service
+
+1. New → **Web Service** → Connect this repo
+2. **Dockerfile Path**: `apps/api/Dockerfile`
+3. **Root Directory**: *(leave empty)*
+4. Set the following **Environment Variables**:
+
+| Variable | Value |
+|---|---|
+| `NODE_ENV` | `production` |
+| `DATABASE_URL` | `mysql://USER:PASSWORD@HOST:PORT/DATABASE` |
+| `SESSION_SECRET` | *(generate: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)* |
+| `CORS_ORIGIN` | `https://notenkonferenz.onrender.com` |
+| `PKORG_BASE_URL` | `https://2026.pkorg.ch` |
+| `UPLOAD_DIR` | `/app/uploads` |
+| `MEDIA_DIR` | `/app/media` |
+| `REDIS_URL` | *(optional — omit or set to your Redis URL)* |
+
+> **Important**: `DATABASE_URL` and `SESSION_SECRET` are required. The API will print a clear error and refuse to start if they are missing.
+
+5. After first deploy, run the migration once via Render Shell (or add it as a pre-deploy command):
+   ```
+   node apps/api/dist/... 
+   ```
+   Or set a **Pre-Deploy Command**: `node -e "const {execSync}=require('child_process');execSync('npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma',{stdio:'inherit'})"` *(adjust path as needed)*
+
+---
+
+### Step 2 — Deploy Web Service
+
+1. New → **Web Service** → Connect this repo
+2. **Dockerfile Path**: `apps/web/Dockerfile`
+3. **Root Directory**: *(leave empty)*
+4. No environment variables required (the API URL is baked into nginx at build time as `https://notenkonferenz-api.onrender.com`)
+
+---
+
+### Notes
+
+- Do **not** use `docker-compose` for Render production. It is only for local development.
+- The Web service nginx config proxies all `/api/` requests to `https://notenkonferenz-api.onrender.com`. If your API service has a different name, update `apps/web/nginx.conf` accordingly.
+- On Render Free, services spin down after inactivity. The first request after a cold start may take ~30 seconds.
+
+---
+
 ## RBAC Roles
 
 | Role  | Permissions                                                |

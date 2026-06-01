@@ -9,22 +9,11 @@ export function DetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const id = parseInt(kandidatId!, 10);
-  const { isStaff, isVex } = useAuth();
+  const { isStaff } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ['item', id],
     queryFn: () => itemsApi.get(id),
-  });
-
-  const submitMutation = useMutation({
-    mutationFn: () => itemsApi.submit(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['item', id] });
-      queryClient.invalidateQueries({ queryKey: ['my-items'] });
-      toast.success('Dossier bestätigt');
-      navigate('/');
-    },
-    onError: (err: any) => toast.error(err.message),
   });
 
   const dropMutation = useMutation({

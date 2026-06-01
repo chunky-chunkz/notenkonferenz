@@ -90,15 +90,6 @@ export function DetailPage() {
                 <td className="px-3 py-2">
                   <div className="flex gap-2 flex-wrap">
                     {/* VEX/EXP: Bestätigen (nur wenn noch nicht abgegeben) */}
-                    {isVex && !item.nkAbgegeben && (
-                      <button
-                        onClick={() => submitMutation.mutate()}
-                        disabled={submitMutation.isPending}
-                        className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-                      >
-                        ✓ Bestätigen
-                      </button>
-                    )}
                     {item.nkAbgegeben && (
                       <span className="px-3 py-1 text-sm rounded bg-green-100 text-green-800">
                         ✅ Abgegeben

@@ -34,4 +34,4 @@ COPY --from=build /app/apps/api/package.json apps/api/package.json
 RUN mkdir -p /app/uploads /app/media
 
 EXPOSE 3001
-CMD ["node", "apps/api/dist/index.js"]
+CMD ["sh", "-c", "npx prisma db push --schema=apps/api/prisma/schema.prisma && node apps/api/dist/index.js"]

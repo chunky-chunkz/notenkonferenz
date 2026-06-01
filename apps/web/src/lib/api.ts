@@ -108,6 +108,9 @@ export const itemsApi = {
   submitted: () =>
     request<{ items: any[] }>('/items/submitted'),
 
+  visieren: (kandidatId: number) =>
+    request<{ item: any }>(`/items/${kandidatId}/visieren`, { method: 'POST' }),
+
   submit: (kandidatId: number) =>
     request<{ item: any }>(`/items/${kandidatId}/submit`, { method: 'POST' }),
 

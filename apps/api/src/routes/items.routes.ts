@@ -300,11 +300,20 @@ itemsRouter.post('/:kandidatId/visieren', async (req: Request, res: Response, ne
     const kandidatId = parseInt(req.params.kandidatId, 10);
     const userId = req.session.userId!;
     const role = effectiveRole(req);
+    const pkorgRoleType = req.session.activePkorgRoleType;
 
-    const where =
-      role === 'ADMIN' || role === 'STAFF'
-        ? { kandidatId }
-        : { kandidatId, pexUserId: userId };
+    // ADMIN/STAFF: any dossier
+    // CEX: any dossier in their fachrichtung (they oversee all experts)
+    // EXP/VEX: only their own assigned dossier
+    let where: any;
+    if (role === 'ADMIN' || role === 'STAFF') {
+      where = { kandidatId };
+    } else if (pkorgRoleType === 'CEX') {
+      const fachrichtungFilter = buildFachrichtungFilter(req);
+      where = { kandidatId, ...fachrichtungFilter };
+    } else {
+      where = { kandidatId, pexUserId: userId };
+    }
 
     const item = await prisma.notenuebersicht.findFirst({ where, include: { kandidat: true } });
     if (!item) {

@@ -2,10 +2,10 @@ import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
 import { prisma } from '../config/database.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, getRoleLevel, parsePkorgFachrichtung, parsePkorgRoleType } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { logger } from '../config/logger.js';
-import { pkorgLogin } from '../services/pkorg/pkorgClient.js';
+import { pkorgLogin, pkorgGetRoles } from '../services/pkorg/pkorgClient.js';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -34,20 +34,47 @@ authRouter.post('/login', async (req: Request, res: Response, next: NextFunction
       try {
         const pkorgCookies = await pkorgLogin(email, password, twoFactorCode);
 
+        // Fetch PKOrg roles immediately so we can persist fachrichtung to the user record
+        let roles: { text: string; url: string }[] = [];
+        try {
+          roles = await pkorgGetRoles(pkorgCookies);
+        } catch (e) {
+          logger.warn('Could not fetch PKOrg roles during login', { error: (e as Error).message });
+        }
+
+        // Pick best role: prefer CEX, then first available
+        const firstRole = roles[0] ?? null;
+        const fachrichtung = firstRole ? parsePkorgFachrichtung(firstRole.text) : null;
+        const roleType = firstRole ? parsePkorgRoleType(firstRole.text) : null;
+
         // Create or find user — always ensure ADMIN role for successful PKOrg logins
         let user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
           const hashedPassword = await bcrypt.hash(password, 12);
           user = await prisma.user.create({
-            data: { email, password: hashedPassword, role: 'ADMIN' },
+            data: {
+              email,
+              password: hashedPassword,
+              role: 'ADMIN',
+              pkorgFachrichtung: fachrichtung,
+              pkorgRoleType: roleType,
+              pkorgRoleText: firstRole?.text ?? null,
+            },
           });
-        } else if (user.role === 'USER') {
-          // Upgrade pre-existing USER-role account to ADMIN on successful PKOrg auth
+        } else {
+          // Update PKOrg affiliation and upgrade role if needed
           user = await prisma.user.update({
             where: { id: user.id },
-            data: { role: 'ADMIN' },
+            data: {
+              ...(user.role === 'USER' ? { role: 'ADMIN' as const } : {}),
+              pkorgFachrichtung: fachrichtung,
+              pkorgRoleType: roleType,
+              pkorgRoleText: firstRole?.text ?? null,
+            },
           });
-          logger.info('User role upgraded to ADMIN via PKOrg login', { email });
+          if (user.role === 'ADMIN') {
+            logger.info('User PKOrg affiliation updated', { email, fachrichtung, roleType });
+          }
         }
 
         req.session.userId = user.id;
@@ -55,6 +82,10 @@ authRouter.post('/login', async (req: Request, res: Response, next: NextFunction
         req.session.pkorgCookies = pkorgCookies;
         req.session.hasPkorgSession = true;
         req.session.lastPkorgPing = new Date().toISOString();
+        req.session.pkorgRoles = roles;
+        req.session.activePkorgRole = firstRole ?? undefined;
+        req.session.activePkorgFachrichtung = fachrichtung;
+        req.session.activePkorgRoleType = roleType ?? undefined;
 
         res.json({
           user: { id: user.id, email: user.email, role: user.role, createdAt: user.createdAt.toISOString() },
@@ -67,7 +98,10 @@ authRouter.post('/login', async (req: Request, res: Response, next: NextFunction
     }
 
     // Local login path
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, role: true, password: true, createdAt: true, pkorgFachrichtung: true, pkorgRoleType: true, pkorgRoleText: true },
+    });
     if (!user) {
       throw new AppError(401, 'auth_failed', 'Invalid email or password');
     }
@@ -80,6 +114,16 @@ authRouter.post('/login', async (req: Request, res: Response, next: NextFunction
     req.session.userId = user.id;
     req.session.userRole = user.role;
     req.session.hasPkorgSession = false;
+    // Restore persisted PKOrg affiliation so the fachrichtung filter works immediately
+    if (user.pkorgFachrichtung) {
+      req.session.activePkorgFachrichtung = user.pkorgFachrichtung;
+    }
+    if (user.pkorgRoleType) {
+      req.session.activePkorgRoleType = user.pkorgRoleType;
+    }
+    if (user.pkorgRoleText) {
+      req.session.activePkorgRole = { text: user.pkorgRoleText, url: '#' };
+    }
 
     res.json({
       user: { id: user.id, email: user.email, role: user.role, createdAt: user.createdAt.toISOString() },
@@ -125,7 +169,7 @@ authRouter.get('/me', requireAuth, async (req: Request, res: Response, next: Nex
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.session.userId },
-      select: { id: true, email: true, role: true, createdAt: true },
+      select: { id: true, email: true, role: true, createdAt: true, pkorgFachrichtung: true, pkorgRoleType: true, pkorgRoleText: true },
     });
 
     if (!user) {
@@ -133,8 +177,15 @@ authRouter.get('/me', requireAuth, async (req: Request, res: Response, next: Nex
     }
 
     res.json({
-      user: { ...user, createdAt: user.createdAt.toISOString() },
+      user: {
+        ...user,
+        createdAt: user.createdAt.toISOString(),
+      },
       hasPkorgSession: req.session.hasPkorgSession ?? false,
+      activePkorgRole: req.session.activePkorgRole ?? null,
+      pkorgRoles: req.session.pkorgRoles ?? [],
+      activePkorgFachrichtung: req.session.activePkorgFachrichtung ?? null,
+      activePkorgRoleType: req.session.activePkorgRoleType ?? null,
     });
   } catch (err) {
     next(err);

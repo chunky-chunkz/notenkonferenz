@@ -60,7 +60,13 @@ export const authApi = {
     request<{ status: string }>('/auth/logout', { method: 'POST' }),
 
   me: () =>
-    request<{ user: any; hasPkorgSession: boolean }>('/auth/me'),
+    request<{
+      user: any;
+      hasPkorgSession: boolean;
+      activePkorgRole: { text: string; url: string } | null;
+      pkorgRoles: { text: string; url: string }[];
+      activePkorgFachrichtung: string | null;
+    }>('/auth/me'),
 };
 
 // ─── Items ───────────────────────────────────────────────────────────────────
@@ -69,6 +75,8 @@ export interface ItemsFilter {
   kandidatId?: string;
   name?: string;
   note?: string;
+  noteMin?: string;
+  noteMax?: string;
   hauptexperte?: string;
   vf?: string;
   nebenexperte?: string;
@@ -94,8 +102,14 @@ export const itemsApi = {
   collect: (typ: string) =>
     request<{ item: any }>('/items/collect', { method: 'POST', body: JSON.stringify({ typ }) }),
 
-  validate: (kandidatId: number) =>
-    request<{ item: any }>(`/items/${kandidatId}/validate`, { method: 'POST' }),
+  collectRandom: (range?: { noteMin?: number; noteMax?: number }) =>
+    request<{ item: any }>('/items/collect-random', { method: 'POST', body: JSON.stringify(range ?? {}) }),
+
+  submitted: () =>
+    request<{ items: any[] }>('/items/submitted'),
+
+  submit: (kandidatId: number) =>
+    request<{ item: any }>(`/items/${kandidatId}/submit`, { method: 'POST' }),
 
   drop: (kandidatId: number) =>
     request<{ status: string }>(`/items/${kandidatId}/drop`, { method: 'POST' }),
@@ -111,6 +125,18 @@ export const itemsApi = {
     request<{ status: string; item: any }>(`/items/${kandidatId}/grade`, {
       method: 'POST',
       body: JSON.stringify({ note }),
+    }),
+
+  updateGrades: (kandidatId: number, data: {
+    punkteTeil1?: number | null; punkteTeil2?: number | null; punkteTeil3?: number | null;
+    noteTeil1?: number | null; noteTeil2?: number | null; noteTeil3?: number | null;
+    punkteTeil1Vf?: number | null; punkteTeil2Vf?: number | null;
+    noteTeil1Vf?: number | null; noteTeil2Vf?: number | null;
+    notePaErrechnet?: number | null;
+  }) =>
+    request<{ status: string; item: any }>(`/items/${kandidatId}/grades`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
     }),
 
   dashboardStats: () =>
@@ -133,6 +159,12 @@ export const adminApi = {
     request<{ user: any }>(`/admin/users/${userId}/role`, {
       method: 'PATCH',
       body: JSON.stringify({ role }),
+    }),
+
+  updateFachrichtung: (userId: number, pkorgFachrichtung: string | null) =>
+    request<{ user: any }>(`/admin/users/${userId}/fachrichtung`, {
+      method: 'PATCH',
+      body: JSON.stringify({ pkorgFachrichtung }),
     }),
 
   deleteUser: (userId: number) =>
@@ -168,20 +200,49 @@ export const adminApi = {
   emptyDatabase: () =>
     request<{ status: string }>('/admin/empty-database', { method: 'POST' }),
 
+  drainQueue: () =>
+    request<{ removed: { failed: number; waiting: number } }>('/admin/imports/drain', { method: 'POST' }),
+
   keepalive: () =>
     request<{ status: string; lastPing: string }>('/admin/keepalive'),
 
   lastPing: () =>
     request<{ lastPing: string }>('/admin/last-ping'),
+
+  getKonferenzStatus: () =>
+    request<{ status: 'vorbereitung' | 'durchfuehrung' }>('/admin/konferenz-status'),
+
+  setKonferenzStatus: (status: 'vorbereitung' | 'durchfuehrung') =>
+    request<{ status: 'vorbereitung' | 'durchfuehrung' }>('/admin/konferenz-status', {
+      method: 'POST',
+      body: JSON.stringify({ status }),
+    }),
+
+  switchPkorgRole: (roleUrl: string) =>
+    request<{ activePkorgRole: { text: string; url: string }; availableRoles: any[] }>(
+      '/admin/pkorg/switch-role',
+      { method: 'POST', body: JSON.stringify({ roleUrl }) },
+    ),
 };
 
 // ─── Jobs ────────────────────────────────────────────────────────────────────
 
 export const jobsApi = {
+  list: () =>
+    request<{ jobs: Array<{ jobId: string; type: string; status: string; progress: number; createdAt: number; error?: string }> }>(
+      '/jobs',
+    ),
+
   status: (jobId: string) =>
-    request<{ jobId: string; type: string; status: string; progress: number; logs: string[]; error?: string }>(
+    request<{ jobId: string; type: string; status: string; progress: number; logs: string[]; createdAt: number; error?: string }>(
       `/jobs/${jobId}`,
     ),
+
+  cancel: (jobId: string) =>
+    request<{ status: string; previousState: string }>(`/jobs/${jobId}/cancel`, { method: 'POST' }),
+
+  remove: (jobId: string) =>
+    request<{ status: string }>(`/jobs/${jobId}`, { method: 'DELETE' }),
 };
 
 // ─── Files ───────────────────────────────────────────────────────────────────

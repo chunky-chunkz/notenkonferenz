@@ -15,6 +15,7 @@ datasource db {
 enum Role {
   USER
   STAFF
+  VEX
   ADMIN
 }
 
@@ -25,6 +26,11 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // PKOrg affiliation — set on first PKOrg login, used for fachrichtung filtering
+  pkorgFachrichtung String? @db.VarChar(100)  // e.g. "Api", "Platt"
+  pkorgRoleType     String? @db.VarChar(20)   // e.g. "CEX", "VEX", "BB"
+  pkorgRoleText     String? @db.VarChar(200)  // full role text from PKOrg
 
   // Relations
   notenuebersichten Notenuebersicht[] @relation("PexUser")
@@ -153,6 +159,7 @@ model Notenuebersicht {
   nkTimestamp DateTime?
   nkVisiert   Boolean   @default(false)
   nkChange    Boolean   @default(false)
+  nkAbgegeben Boolean   @default(false)
 
   // Relations
   anpassungen Anpassung[]

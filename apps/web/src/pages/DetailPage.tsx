@@ -1,6 +1,7 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { itemsApi, filesApi } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 export function DetailPage() {
@@ -8,18 +9,19 @@ export function DetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const id = parseInt(kandidatId!, 10);
+  const { isStaff, isVex } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ['item', id],
     queryFn: () => itemsApi.get(id),
   });
 
-  const validateMutation = useMutation({
-    mutationFn: () => itemsApi.validate(id),
+  const submitMutation = useMutation({
+    mutationFn: () => itemsApi.submit(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['item', id] });
       queryClient.invalidateQueries({ queryKey: ['my-items'] });
-      toast.success('Erfolgreich validiert');
+      toast.success('Dossier bestätigt');
       navigate('/');
     },
     onError: (err: any) => toast.error(err.message),
@@ -29,7 +31,7 @@ export function DetailPage() {
     mutationFn: () => itemsApi.drop(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-items'] });
-      toast.success('Zuständigkeit aufgehoben');
+      toast.success('Rückgabe erfolgt');
       navigate('/');
     },
     onError: (err: any) => toast.error(err.message),
@@ -87,26 +89,38 @@ export function DetailPage() {
                 </td>
                 <td className="px-3 py-2">
                   <div className="flex gap-2 flex-wrap">
-                    <button
-                      onClick={() => validateMutation.mutate()}
-                      disabled={validateMutation.isPending}
-                      className="px-3 py-1 text-sm rounded bg-green-600 text-white hover:bg-green-700"
-                    >
-                      ✓ Validieren
-                    </button>
-                    <Link
-                      to={`/change/${id}`}
-                      className="px-3 py-1 text-sm rounded bg-yellow-500 text-white hover:bg-yellow-600"
-                    >
-                      ✎ Anpassen
-                    </Link>
-                    <button
-                      onClick={() => dropMutation.mutate()}
-                      disabled={dropMutation.isPending}
-                      className="px-3 py-1 text-sm rounded bg-red-600 text-white hover:bg-red-700"
-                    >
-                      ✕ Ablehnen
-                    </button>
+                    {/* VEX/EXP: Bestätigen (nur wenn noch nicht abgegeben) */}
+                    {isVex && !item.nkAbgegeben && (
+                      <button
+                        onClick={() => submitMutation.mutate()}
+                        disabled={submitMutation.isPending}
+                        className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+                      >
+                        ✓ Bestätigen
+                      </button>
+                    )}
+                    {item.nkAbgegeben && (
+                      <span className="px-3 py-1 text-sm rounded bg-green-100 text-green-800">
+                        ✅ Abgegeben
+                      </span>
+                    )}
+                    {isStaff && (
+                      <>
+                        <Link
+                          to={`/change/${id}`}
+                          className="px-3 py-1 text-sm rounded bg-yellow-500 text-white hover:bg-yellow-600"
+                        >
+                          ✎ Anpassen
+                        </Link>
+                        <button
+                          onClick={() => dropMutation.mutate()}
+                          disabled={dropMutation.isPending}
+                          className="px-3 py-1 text-sm rounded bg-red-600 text-white hover:bg-red-700"
+                        >
+                          ↩ Rückgabe
+                        </button>
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>

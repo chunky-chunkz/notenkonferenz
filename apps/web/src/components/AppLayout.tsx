@@ -2,7 +2,7 @@ import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export function AppLayout() {
-  const { user, loading, logout, isStaff, isAdmin } = useAuth();
+  const { user, loading, logout, isStaff, isAdmin, isVex, isExp } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -19,9 +19,9 @@ export function AppLayout() {
 
   const navLinks = [
     { to: '/', label: 'Meine IPA', show: true },
+    { to: '/submitted', label: '📥 Abgegebene Dossiers', show: isVex && !isExp },
     { to: '/dashboard', label: 'Dashboard', show: isStaff },
-    { to: '/overview', label: 'Übersicht', show: isStaff },
-    { to: '/missing-grades', label: 'Fehlende Noten', show: isStaff },
+    { to: '/overview', label: 'Übersicht', show: isVex },
     { to: '/admin', label: 'Admin', show: isAdmin },
   ];
 
@@ -54,34 +54,6 @@ export function AppLayout() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              {isAdmin && (
-                <div className="hidden md:flex gap-1">
-                  <Link
-                    to="/collect?typ=ungenuegend"
-                    className="px-2 py-1 rounded text-xs bg-red-500/80 text-white hover:bg-red-500"
-                  >
-                    Ungenügend
-                  </Link>
-                  <Link
-                    to="/collect?typ=knapp"
-                    className="px-2 py-1 rounded text-xs bg-yellow-500/80 text-white hover:bg-yellow-500"
-                  >
-                    Knapp
-                  </Link>
-                  <Link
-                    to="/collect?typ=gut"
-                    className="px-2 py-1 rounded text-xs bg-green-500/80 text-white hover:bg-green-500"
-                  >
-                    Gut
-                  </Link>
-                  <Link
-                    to="/collect?typ=sehrgut"
-                    className="px-2 py-1 rounded text-xs bg-blue-500/80 text-white hover:bg-blue-500"
-                  >
-                    Sehr gut
-                  </Link>
-                </div>
-              )}
               <span className="text-white/80 text-sm">{user.email}</span>
               <button
                 onClick={logout}

@@ -15,11 +15,15 @@ import { AppError } from '../middleware/errorHandler.js';
 import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
 
-// pdf-parse has no @types, use dynamic import
+// pdf-parse has no @types and has ESM-incompatible internals.
+// We use createRequire to load it as CommonJS.
+import { createRequire } from 'node:module';
+
 let pdfParse: ((buffer: Buffer) => Promise<any>) | null = null;
 (async () => {
   try {
-    const mod: any = await import('pdf-parse');
+    const require = createRequire(import.meta.url);
+    const mod = require('pdf-parse');
     pdfParse = mod.default ?? mod;
   } catch {
     logger.warn('pdf-parse not installed – PDF text extraction will not work');

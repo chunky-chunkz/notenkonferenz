@@ -2,20 +2,20 @@ import { Router, Request, Response, NextFunction } from 'express';
 import path from 'node:path';
 import fs from 'node:fs';
 import { prisma } from '../config/database.js';
-import { requireStaff } from '../middleware/auth.js';
+import { requireVex, effectiveRole } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { env } from '../config/env.js';
 import { uploadZip } from '../middleware/upload.js';
+import { pkorgDownloadPortfolioZip, pkorgGetMandantId } from '../services/pkorg/pkorgClient.js';
 
 export const filesRouter = Router();
-filesRouter.use(requireStaff);
+filesRouter.use(requireVex);
 
 // ─── GET /api/files/portfolio/:kandidatId ────────────────────────────────────
 filesRouter.get('/portfolio/:kandidatId', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const kandidatId = parseInt(req.params.kandidatId, 10);
 
-    // Auth check: user must be assigned PEX or admin
     const item = await prisma.notenuebersicht.findUnique({
       where: { kandidatId },
       include: { kandidat: true },
@@ -25,17 +25,44 @@ filesRouter.get('/portfolio/:kandidatId', async (req: Request, res: Response, ne
       throw new AppError(404, 'not_found', 'Item not found');
     }
 
-    if (item.pexUserId !== req.session.userId && req.session.userRole !== 'ADMIN') {
-      throw new AppError(403, 'forbidden', 'Not authorized to download this portfolio');
-    }
-
-    const filePath = path.join(env.MEDIA_DIR, 'portfolios', `${kandidatId}.zip`);
-    if (!fs.existsSync(filePath)) {
-      throw new AppError(404, 'file_not_found', 'Portfolio file not found');
+    // VEX: may only download portfolios within their active fachrichtung
+    const role = effectiveRole(req);
+    const fachrichtung = req.session.activePkorgFachrichtung;
+    if (role === 'VEX') {
+      if (!fachrichtung || !(item.fachrichtung ?? '').includes(fachrichtung)) {
+        throw new AppError(403, 'forbidden', 'Not authorized to download this portfolio');
+      }
     }
 
     const kandidat = item.kandidat;
     const filename = `Dossier_${kandidat?.nachname}_${kandidat?.vorname}.zip`;
+
+    // Try direct PKOrg download first if session is available
+    const cookies = req.session.pkorgCookies;
+    if (cookies) {
+      try {
+        const nmandantid = await pkorgGetMandantId(cookies);
+        const buffer = await pkorgDownloadPortfolioZip(cookies, nmandantid, kandidatId);
+
+        // Save to disk for future use
+        const portfoliosDir = path.join(env.MEDIA_DIR, 'portfolios');
+        fs.mkdirSync(portfoliosDir, { recursive: true });
+        fs.writeFileSync(path.join(portfoliosDir, `${kandidatId}.zip`), buffer);
+
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(buffer);
+        return;
+      } catch (pkorgErr) {
+        // Fall through to local file
+      }
+    }
+
+    // Fallback: serve from local disk
+    const filePath = path.join(env.MEDIA_DIR, 'portfolios', `${kandidatId}.zip`);
+    if (!fs.existsSync(filePath)) {
+      throw new AppError(404, 'file_not_found', 'Portfolio file not found. Please connect to PKOrg or download portfolios first.');
+    }
 
     res.download(filePath, filename);
   } catch (err) {

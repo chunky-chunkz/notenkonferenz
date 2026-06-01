@@ -13,6 +13,7 @@ import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { UserManagementPage } from './pages/UserManagementPage';
 import { LogsPage } from './pages/LogsPage';
 import { MissingPortfoliosPage } from './pages/MissingPortfoliosPage';
+import { SubmittedPage } from './pages/SubmittedPage';
 import { ReactNode } from 'react';
 
 function StaffRoute({ children }: { children: ReactNode }) {
@@ -22,6 +23,19 @@ function StaffRoute({ children }: { children: ReactNode }) {
       <div className="text-center py-12">
         <h2 className="text-xl font-bold mb-2">Zugang nicht erlaubt</h2>
         <p className="text-gray-500">Sie benötigen Staff-Rechte für den Zugriff.</p>
+      </div>
+    );
+  }
+  return <>{children}</>;
+}
+
+function VexRoute({ children }: { children: ReactNode }) {
+  const { isVex } = useAuth();
+  if (!isVex) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-xl font-bold mb-2">Zugang nicht erlaubt</h2>
+        <p className="text-gray-500">Sie benötigen mindestens Experten-Rechte für den Zugriff.</p>
       </div>
     );
   }
@@ -58,10 +72,12 @@ export const router = createBrowserRouter([
       { index: true, element: <IndexPage /> },
       { path: 'details/:kandidatId', element: <DetailPage /> },
       { path: 'change/:kandidatId', element: <ChangePage /> },
+      // Vex + Staff + Admin (Experten können Dossiers ansehen und Noten eingeben)
+      { path: 'overview', element: <VexRoute><OverviewPage /></VexRoute> },
+      { path: 'missing-grades', element: <VexRoute><MissingGradesPage /></VexRoute> },
+      { path: 'submitted', element: <VexRoute><SubmittedPage /></VexRoute> },
       // Staff + Admin
       { path: 'dashboard', element: <StaffRoute><DashboardPage /></StaffRoute> },
-      { path: 'overview', element: <StaffRoute><OverviewPage /></StaffRoute> },
-      { path: 'missing-grades', element: <StaffRoute><MissingGradesPage /></StaffRoute> },
       // Admin only
       { path: 'admin', element: <AdminRoute><AdminDashboardPage /></AdminRoute> },
       { path: 'admin/users', element: <AdminRoute><UserManagementPage /></AdminRoute> },

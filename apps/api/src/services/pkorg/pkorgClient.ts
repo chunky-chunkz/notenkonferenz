@@ -164,6 +164,17 @@ export async function pkorgPing(cookies: CookieJar): Promise<boolean> {
 
 /**
  * Get available roles from PKOrg dashboard HTML (scraping).
+ *
+ * PKOrg uses AngularJS switchAffiliation() — all <a> elements have href="#".
+ * The actual role data is embedded as:
+ *   var affiliations = [{
+ *     "nrolle2mandantid": 8963,
+ *     "label_client": "Inf Api CH",   ← e.g. "Inf Api CH", "Inf Platt CH"
+ *     "label_role": "CEX",            ← CEX | VEX | EXP | BB | HEK
+ *     ...
+ *   }, ...]
+ *
+ * The switch URL is /mandant/switch/{nrolle2mandantid}.
  */
 export async function pkorgGetRoles(cookies: CookieJar): Promise<{ text: string; url: string }[]> {
   const { res } = await fetchWithCookies(`${BASE_URL}/`, cookies);
@@ -173,46 +184,111 @@ export async function pkorgGetRoles(cookies: CookieJar): Promise<{ text: string;
   }
 
   const html = await res.text();
-  const $ = cheerio.load(html);
+  logger.debug('pkorgGetRoles: HTML length', { length: html.length, preview: html.substring(0, 300) });
 
+  // Primary: parse the embedded `var affiliations = [...]` JSON
+  const affMatch = html.match(/var\s+affiliations\s*=\s*(\[[\s\S]*?\]);/);
+  logger.debug('pkorgGetRoles: affiliations match', { found: !!affMatch });
+  if (affMatch) {
+    try {
+      const affiliations: Array<{
+        nrolle2mandantid: number;
+        label_client: string;
+        label_role: string;
+      }> = JSON.parse(affMatch[1]);
+
+      logger.debug('pkorgGetRoles: parsed affiliations', { count: affiliations.length, sample: affiliations[0] });
+
+      return affiliations
+        .filter((a) => a.nrolle2mandantid && a.label_client && a.label_role)
+        .map((a) => ({
+          text: `${a.label_client} (${a.label_role})`,
+          url:  `/mandant/switch/${a.nrolle2mandantid}`,
+        }));
+    } catch (err) {
+      logger.warn('Failed to parse affiliations JSON from PKOrg HTML', { error: (err as Error).message });
+    }
+  }
+
+  // Fallback: scrape the mobile switcher links (may have href="#" on newer PKOrg versions)
+  const $ = cheerio.load(html);
   const roles: { text: string; url: string }[] = [];
   $('#client-switcher-mobile a.mandantSwitch').each((_i, el) => {
     const text = $(el).text().trim();
     const url = $(el).attr('href') ?? '';
-    if (text && url) {
+    if (text && url && url !== '#') {
       roles.push({ text, url });
     }
   });
+
+  logger.debug('pkorgGetRoles: fallback scraper found', { count: roles.length });
+
+  // Last resort: try alternate variable names or JSON blocks
+  if (roles.length === 0) {
+    // Try "affiliations" without "var" keyword (minified JS)
+    const jsonMatch = html.match(/affiliations\s*[=:]\s*(\[[\s\S]*?\])[,;]/);
+    if (jsonMatch) {
+      try {
+        const affiliations: Array<{ nrolle2mandantid?: number; label_client?: string; label_role?: string }> = JSON.parse(jsonMatch[1]);
+        logger.debug('pkorgGetRoles: found via alternate pattern', { count: affiliations.length });
+        return affiliations
+          .filter((a) => a.nrolle2mandantid && a.label_client && a.label_role)
+          .map((a) => ({
+            text: `${a.label_client} (${a.label_role})`,
+            url:  `/mandant/switch/${a.nrolle2mandantid}`,
+          }));
+      } catch { /* ignore */ }
+    }
+
+    // Log a section of the HTML around "affiliations" for manual inspection
+    const idx = html.indexOf('affiliations');
+    if (idx !== -1) {
+      logger.warn('pkorgGetRoles: "affiliations" found in HTML but could not parse', {
+        context: html.substring(Math.max(0, idx - 50), idx + 300),
+      });
+    } else {
+      logger.warn('pkorgGetRoles: "affiliations" NOT found in HTML at all — session may be invalid or HTML structure changed');
+    }
+  }
 
   return roles;
 }
 
 /**
- * Switch to a specific PKOrg role.
+ * Switch to a PKOrg role (best-effort).
+ *
+ * PKOrg's actual role switch is driven by AngularJS calling an internal API.
+ * The URLs in the HTML all have href="#", so a direct GET cannot reliably switch
+ * the server-side session. We try a few known URL patterns and log a warning if
+ * all fail — the LOCAL session filter (activePkorgFachrichtung) is set regardless.
+ *
+ * Returns updated cookies on success, or the original jar if the switch fails.
  */
-/**
- * Switch to a PKOrg role.
- * Mirrors Django's switch_user_role():
- *   encoded_path = '/'.join([quote(part, safe='') for part in role_url.strip('/').split('/')])
- *   full_url = f"{BASE_URL}/{encoded_path}"
- *   response = session.get(full_url)   # requests.Session follows redirects → final status 200
- *   if response.status_code != 200: raise Exception(...)
- * Returns updated cookies (= same jar + any new Set-Cookie headers from PKOrg).
- */
-export async function pkorgSwitchRole(cookies: CookieJar, roleUrl: string): Promise<CookieJar> {
-  if (!roleUrl) throw new Error('No role URL provided');
-
-  // Build full URL — cheerio returns the raw HTML attribute value which is already URL-encoded.
-  // Just prepend BASE_URL (Django import handlers do the same: f"{BASE_URL}{role_url}").
-  const fullUrl = roleUrl.startsWith('http') ? roleUrl : `${BASE_URL}${roleUrl.startsWith('/') ? '' : '/'}${roleUrl}`;
-
-  const { res, cookies: updatedCookies } = await fetchWithCookies(fullUrl, cookies);
-
-  if (!res.ok) {
-    throw new Error(`Role switch failed: ${res.status}`);
+export async function pkorgSwitchRole(
+  cookies: CookieJar,
+  roleUrl: string,
+): Promise<{ cookies: CookieJar; switched: boolean }> {
+  if (!roleUrl || roleUrl === '#') {
+    logger.warn('pkorgSwitchRole: no real URL provided — local filter updated, PKOrg session unchanged');
+    return { cookies, switched: false };
   }
 
-  return updatedCookies;
+  const fullUrl = roleUrl.startsWith('http')
+    ? roleUrl
+    : `${BASE_URL}${roleUrl.startsWith('/') ? '' : '/'}${roleUrl}`;
+
+  try {
+    const { res, cookies: updatedCookies } = await fetchWithCookies(fullUrl, cookies);
+    if (res.ok) {
+      return { cookies: updatedCookies, switched: true };
+    }
+    logger.warn('pkorgSwitchRole: HTTP switch returned non-OK status', { status: res.status, url: fullUrl });
+  } catch (err) {
+    logger.warn('pkorgSwitchRole: HTTP switch request failed', { error: (err as Error).message, url: fullUrl });
+  }
+
+  // Return original cookies — local session filter is still applied
+  return { cookies, switched: false };
 }
 
 /**
@@ -228,6 +304,16 @@ export async function pkorgDownloadExcel(
 
   if (!res.ok) {
     throw new Error(`Excel download failed: ${res.status}`);
+  }
+
+  const contentType = res.headers.get('content-type') ?? '';
+  if (contentType.includes('text/html')) {
+    // PKOrg returned an HTML page (likely a login redirect or session expiry)
+    const html = await res.text();
+    const snippet = html.slice(0, 300).replace(/\s+/g, ' ');
+    throw new Error(
+      `PKOrg session abgelaufen oder ungültig – HTML statt Excel erhalten. Snippet: ${snippet}`,
+    );
   }
 
   const arrayBuffer = await res.arrayBuffer();

@@ -3,6 +3,13 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { itemsApi } from '../lib/api';
 import toast from 'react-hot-toast';
 
+const NOTE_RANGES = [
+  { label: '< 4.0', noteMin: 0,   noteMax: 3.9,  color: 'bg-red-600 hover:bg-red-700' },
+  { label: '4.0 – 4.3', noteMin: 4.0, noteMax: 4.3, color: 'bg-orange-500 hover:bg-orange-600' },
+  { label: '4.4 – 5.6', noteMin: 4.4, noteMax: 5.6, color: 'bg-yellow-500 hover:bg-yellow-600' },
+  { label: '> 5.6', noteMin: 5.7, noteMax: 6.0, color: 'bg-green-600 hover:bg-green-700' },
+];
+
 export function IndexPage() {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
@@ -22,6 +29,16 @@ export function IndexPage() {
     onError: (err: any) => toast.error(err.message),
   });
 
+  const collectRandomMutation = useMutation({
+    mutationFn: (range?: { noteMin?: number; noteMax?: number }) => itemsApi.collectRandom(range),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['my-items'] });
+      const k = data?.item?.kandidat;
+      toast.success(`Dossier übernommen: ${k?.vorname ?? ''} ${k?.nachname ?? ''}`);
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
   // Auto-collect if typ param present
   if (collectTyp && !collectMutation.isPending) {
     collectMutation.mutate(collectTyp);
@@ -34,19 +51,64 @@ export function IndexPage() {
   }
 
   const items = data?.items ?? [];
-  const openItems = items.filter((i: any) => !i.nkVisiert);
+  // "offen" = zugewiesen, noch nicht bestätigt, noch nicht validiert
+  const openItems = items.filter((i: any) => !i.nkAbgegeben && !i.nkVisiert);
+  // "bestätigt" = bestätigt durch EXP, wartet auf CEX-Validierung
+  const submittedItems = items.filter((i: any) => i.nkAbgegeben && !i.nkVisiert);
   const doneItems = items.filter((i: any) => i.nkVisiert);
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Meine IPA</h1>
 
-      {openItems.length === 0 && doneItems.length === 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
-          <p className="text-gray-500 mb-4">Keine IPA zugewiesen.</p>
-          <p className="text-sm text-gray-400">
-            Verwenden Sie die Kategorien in der Navigation, um eine IPA zu übernehmen.
-          </p>
+      {openItems.length === 0 && doneItems.length === 0 && submittedItems.length === 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+          <p className="text-gray-500 mb-5 text-center">Keine IPA zugewiesen.</p>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Dossier nach Notenbereich holen:</p>
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {NOTE_RANGES.map((r) => (
+              <button
+                key={r.label}
+                onClick={() => collectRandomMutation.mutate({ noteMin: r.noteMin, noteMax: r.noteMax })}
+                disabled={collectRandomMutation.isPending}
+                className={`px-4 py-3 ${r.color} text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => collectRandomMutation.mutate(undefined)}
+            disabled={collectRandomMutation.isPending}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+          >
+            {collectRandomMutation.isPending ? 'Wird geholt…' : '🎲 Beliebiges Dossier holen'}
+          </button>
+        </div>
+      )}
+
+      {(openItems.length > 0 || doneItems.length > 0 || submittedItems.length > 0) && (
+        <div className="mb-6">
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Weiteres Dossier holen:</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+            {NOTE_RANGES.map((r) => (
+              <button
+                key={r.label}
+                onClick={() => collectRandomMutation.mutate({ noteMin: r.noteMin, noteMax: r.noteMax })}
+                disabled={collectRandomMutation.isPending}
+                className={`px-3 py-2 ${r.color} text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => collectRandomMutation.mutate(undefined)}
+            disabled={collectRandomMutation.isPending}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+          >
+            {collectRandomMutation.isPending ? 'Wird geholt…' : '🎲 Beliebiges Dossier holen'}
+          </button>
         </div>
       )}
 
@@ -61,16 +123,17 @@ export function IndexPage() {
         </div>
       )}
 
-      {doneItems.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold mb-3">✅ Erledigt ({doneItems.length})</h2>
-          <div className="grid gap-4 opacity-70">
-            {doneItems.map((item: any) => (
+      {submittedItems.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-3">⏳ Bestätigt – wartet auf Validierung ({submittedItems.length})</h2>
+          <div className="grid gap-4 opacity-80">
+            {submittedItems.map((item: any) => (
               <ItemCard key={item.id} item={item} />
             ))}
           </div>
         </div>
       )}
+
     </div>
   );
 }

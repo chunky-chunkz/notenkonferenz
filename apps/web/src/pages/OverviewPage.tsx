@@ -6,6 +6,7 @@ import { Pagination } from '../components/Pagination';
 
 export function OverviewPage() {
   const [filters, setFilters] = useState<ItemsFilter>({ page: 1, pageSize: 25 });
+  const [noteRange, setNoteRange] = useState('');
 
   const { data, isLoading } = useQuery({
     queryKey: ['items-overview', filters],
@@ -14,6 +15,33 @@ export function OverviewPage() {
 
   const updateFilter = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
+  };
+
+  const handleNoteRange = (value: string) => {
+    setNoteRange(value);
+    // Parse formats: "4.5-5.0", "4.5 - 5.0", "4.5", ">4.5", "<5.0"
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setFilters((prev) => { const f = { ...prev, page: 1 }; delete f.noteMin; delete f.noteMax; delete f.note; return f; });
+      return;
+    }
+    const rangeMatch = trimmed.match(/^([0-9.]+)\s*[-–]\s*([0-9.]+)$/);
+    if (rangeMatch) {
+      setFilters((prev) => ({ ...prev, noteMin: rangeMatch[1], noteMax: rangeMatch[2], note: undefined, page: 1 }));
+      return;
+    }
+    const gtMatch = trimmed.match(/^>\s*([0-9.]+)$/);
+    if (gtMatch) {
+      setFilters((prev) => ({ ...prev, noteMin: gtMatch[1], noteMax: undefined, note: undefined, page: 1 }));
+      return;
+    }
+    const ltMatch = trimmed.match(/^<\s*([0-9.]+)$/);
+    if (ltMatch) {
+      setFilters((prev) => ({ ...prev, noteMax: ltMatch[1], noteMin: undefined, note: undefined, page: 1 }));
+      return;
+    }
+    // Single value
+    setFilters((prev) => ({ ...prev, note: trimmed, noteMin: undefined, noteMax: undefined, page: 1 }));
   };
 
   return (
@@ -36,9 +64,9 @@ export function OverviewPage() {
             className="px-3 py-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600"
           />
           <input
-            placeholder="Note"
-            value={filters.note ?? ''}
-            onChange={(e) => updateFilter('note', e.target.value)}
+            placeholder="Note (z.B. 4.5-5.0, >4.0, <5.5, 4.5)"
+            value={noteRange}
+            onChange={(e) => handleNoteRange(e.target.value)}
             className="px-3 py-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600"
           />
           <input

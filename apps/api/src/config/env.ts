@@ -6,7 +6,7 @@ const envSchema = z.object({
   DATABASE_URL: z
     .string({ required_error: 'DATABASE_URL is required. Set it to your external MySQL connection string, e.g. mysql://USER:PASSWORD@HOST:PORT/DATABASE. The docker-compose value mysql://nkuser:nkpassword@mysql:3306/notenkonferenz only works locally.' })
     .url('DATABASE_URL must be a valid connection string, e.g. mysql://USER:PASSWORD@HOST:PORT/DATABASE'),
-  REDIS_URL: z.string().default('redis://localhost:6379'),
+  REDIS_URL: z.string().optional(),
   SESSION_SECRET: z
     .string({ required_error: 'SESSION_SECRET is required. Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"' })
     .min(16, 'SESSION_SECRET must be at least 16 characters'),

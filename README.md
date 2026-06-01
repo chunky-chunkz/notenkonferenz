@@ -142,59 +142,65 @@ docker compose logs -f api worker
 
 ## Render Deployment
 
-Deploy the API and Web as two separate Docker Web Services on Render Free.
-There is no Background Worker on Render Free — import/download jobs require Redis and a worker process, which is only available in the local Docker Compose setup.
+Deploy as two separate **Docker Web Services** on Render Free. No Background Worker is required or used.
+
+> **Note**: The docker-compose stack (`docker compose up`) is for local development only. Do not use it on Render.
+
+---
 
 ### Prerequisites
 
-- An external MySQL database (e.g. PlanetScale, Railway, Aiven, or any host with a public connection string).
-  The docker-compose value `mysql://nkuser:nkpassword@mysql:3306/notenkonferenz` **only works locally** and will not work on Render.
-- Optional: an external Redis instance (e.g. Upstash, Railway). Without Redis, sessions fall back to in-memory and import/download jobs are unavailable. The API will still start.
+An **external MySQL database** reachable from Render. Options: [PlanetScale](https://planetscale.com), [Railway](https://railway.app), [Aiven](https://aiven.io), or any MySQL host with a public connection string.
+
+> The docker-compose value `mysql://nkuser:nkpassword@mysql:3306/notenkonferenz` resolves the hostname `mysql` inside Docker only. It will **not** work on Render.
+
+Redis is **optional**. If `REDIS_URL` is omitted, the API falls back to an in-memory session store with a startup warning. Sessions are not persisted across restarts in this mode. Import/download job endpoints return HTTP 503. This is acceptable for a single-instance demo. For production, provide a Redis URL (e.g. [Upstash](https://upstash.com) free tier).
 
 ---
 
-### Step 1 — Deploy API Web Service
+### Step 1 — Deploy the API Web Service
 
-1. New → **Web Service** → Connect this repo
+1. Render Dashboard → **New → Web Service** → connect this repo
 2. **Dockerfile Path**: `apps/api/Dockerfile`
 3. **Root Directory**: *(leave empty)*
-4. Set the following **Environment Variables**:
+4. Add these **Environment Variables**:
 
-| Variable | Value |
-|---|---|
-| `NODE_ENV` | `production` |
-| `DATABASE_URL` | `mysql://USER:PASSWORD@HOST:PORT/DATABASE` |
-| `SESSION_SECRET` | *(generate: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)* |
-| `CORS_ORIGIN` | `https://notenkonferenz.onrender.com` |
-| `PKORG_BASE_URL` | `https://2026.pkorg.ch` |
-| `UPLOAD_DIR` | `/app/uploads` |
-| `MEDIA_DIR` | `/app/media` |
-| `REDIS_URL` | *(optional — omit or set to your Redis URL)* |
+| Variable | Required | Value |
+|---|---|---|
+| `NODE_ENV` | Yes | `production` |
+| `DATABASE_URL` | **Yes** | `mysql://USER:PASSWORD@HOST:PORT/DATABASE` |
+| `SESSION_SECRET` | **Yes** | Random string ≥ 16 chars — generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `CORS_ORIGIN` | Yes | `https://notenkonferenz.onrender.com` *(your web service URL)* |
+| `PKORG_BASE_URL` | Yes | `https://2026.pkorg.ch` |
+| `UPLOAD_DIR` | Yes | `/app/uploads` |
+| `MEDIA_DIR` | Yes | `/app/media` |
+| `REDIS_URL` | Optional | Redis connection string — omit to use in-memory sessions (demo only) |
 
-> **Important**: `DATABASE_URL` and `SESSION_SECRET` are required. The API will print a clear error and refuse to start if they are missing.
+> If `DATABASE_URL` or `SESSION_SECRET` are missing the API prints a clear error message and exits immediately.
 
-5. After first deploy, run the migration once via Render Shell (or add it as a pre-deploy command):
+5. **Run the database migration** after the first deploy. In the Render service → **Shell**:
    ```
-   node apps/api/dist/... 
+   node -e "const {execSync}=require('child_process'); execSync('npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma', {stdio:'inherit', cwd:'/app'})"
    ```
-   Or set a **Pre-Deploy Command**: `node -e "const {execSync}=require('child_process');execSync('npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma',{stdio:'inherit'})"` *(adjust path as needed)*
+   Or set it as a **Pre-Deploy Command** in Render settings.
 
 ---
 
-### Step 2 — Deploy Web Service
+### Step 2 — Deploy the Web Service
 
-1. New → **Web Service** → Connect this repo
+1. Render Dashboard → **New → Web Service** → connect this repo
 2. **Dockerfile Path**: `apps/web/Dockerfile`
 3. **Root Directory**: *(leave empty)*
-4. No environment variables required (the API URL is baked into nginx at build time as `https://notenkonferenz-api.onrender.com`)
+4. No environment variables required.
+
+The nginx config inside the web container proxies all `/api/` requests to `https://notenkonferenz-api.onrender.com` using a runtime DNS resolver (no startup-time hostname failure). If your API service URL differs, update `apps/web/nginx.conf` before deploying.
 
 ---
 
-### Notes
+### Render Free tier behaviour
 
-- Do **not** use `docker-compose` for Render production. It is only for local development.
-- The Web service nginx config proxies all `/api/` requests to `https://notenkonferenz-api.onrender.com`. If your API service has a different name, update `apps/web/nginx.conf` accordingly.
-- On Render Free, services spin down after inactivity. The first request after a cold start may take ~30 seconds.
+- Services spin down after ~15 minutes of inactivity. The first request after a cold start takes ~30 seconds.
+- Uploaded files (`/app/uploads`, `/app/media`) are stored on the container's ephemeral disk and **will be lost** on each deploy or restart. For persistent file storage, mount a Render Disk or use an external object store.
 
 ---
 

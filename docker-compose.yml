@@ -44,7 +44,7 @@ services:
       PORT: 3001
       DATABASE_URL: mysql://nkuser:nkpassword@mysql:3306/notenkonferenz
       REDIS_URL: redis://redis:6379
-      SESSION_SECRET: 0d0eb9f44fc859ec1d7d722057d4c1c4a2f709f4150f1fb8a29677da7499e15e
+      SESSION_SECRET: ${SESSION_SECRET:-local-dev-secret-change-me}
       CORS_ORIGIN: http://localhost:5173
       PKORG_BASE_URL: https://pk19.ch
       UPLOAD_DIR: /app/uploads

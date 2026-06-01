@@ -1,13 +1,14 @@
 import Redis from 'ioredis';
 import { env } from './env.js';
 
-function makeRedis(options: ConstructorParameters<typeof Redis>[1] = {}): Redis {
+function makeRedis(options: ConstructorParameters<typeof Redis>[1] = {}): Redis | null {
+  if (!env.REDIS_URL) return null;
   const client = new Redis(env.REDIS_URL, {
     enableOfflineQueue: false,
     ...options,
   });
   client.on('error', (err: Error) => {
-    console.warn('[Redis] connection error (non-fatal):', err.message);
+    console.error('[Redis] connection error:', err.message);
   });
   return client;
 }

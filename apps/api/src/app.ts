@@ -30,10 +30,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Session (Redis-backed)
-const redisStore = new RedisStore({ client: sessionRedis });
+// Session store: Redis when REDIS_URL is set, MemoryStore otherwise.
+// WARNING: MemoryStore is for single-instance demo use only — sessions are lost
+// on restart and not shared across multiple instances. Set REDIS_URL in production.
+let sessionStore: session.Store;
+if (sessionRedis) {
+  sessionStore = new RedisStore({ client: sessionRedis });
+} else {
+  console.warn(
+    '\n⚠️  [Session] REDIS_URL is not set — using in-memory session store.\n' +
+    '   Sessions will be lost on restart and are not shared across instances.\n' +
+    '   Suitable for single-instance demo only. Set REDIS_URL for production.\n',
+  );
+  sessionStore = new session.MemoryStore();
+}
+
 app.use(session({
-  store: redisStore,
+  store: sessionStore,
   name: 'mcs_session',
   secret: env.SESSION_SECRET,
   resave: false,

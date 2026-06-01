@@ -23,6 +23,7 @@ RUN npm run build --workspace=apps/api
 
 # Production
 FROM base AS runner
+RUN apk add --no-cache openssl
 ENV NODE_ENV=production
 COPY --from=build /app/node_modules node_modules
 COPY --from=build /app/packages/shared/dist packages/shared/dist

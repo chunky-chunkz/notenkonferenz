@@ -26,6 +26,7 @@ interface JobData {
   cookies: CookieJar;
   roleUrl?: string;
   userId?: number;
+  fachrichtung?: string;
   logs?: string[];
 }
 
@@ -35,6 +36,11 @@ function addLog(job: Job, message: string) {
   data.logs.push(message);
   job.updateData(data);
   logger.info(`[Job ${job.id}] ${message}`);
+}
+
+if (!redis) {
+  logger.error('Worker requires REDIS_URL — exiting.');
+  process.exit(1);
 }
 
 const worker = new Worker(
@@ -97,7 +103,8 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
   let cookies = data.cookies;
   if (data.roleUrl && data.roleUrl !== '#') {
     addLog(job, `🔗 Switching role: ${data.roleUrl}`);
-    cookies = await pkorgSwitchRole(cookies, data.roleUrl);
+    const switchResult = await pkorgSwitchRole(cookies, data.roleUrl);
+    cookies = switchResult.cookies;
     addLog(job, '✅ Role switched');
   }
 
@@ -115,6 +122,10 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
   await job.updateProgress(30);
 
   addLog(job, `📋 Found ${rows.length} rows`);
+  if (rows.length > 0) {
+    addLog(job, `🔑 Keys: ${Object.keys(rows[0]).join(' | ')}`);
+    addLog(job, `🔍 Row0: ${JSON.stringify(rows[0])}`);
+  }
 
   // Collect entities
   const existingKandidaten = new Set((await prisma.kandidat.findMany({ select: { id: true } })).map((k) => k.id));
@@ -155,6 +166,8 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
   }
 
   // Bulk create base entities
+  addLog(job, `🔢 To create: ${newKandidaten.length} Kand, ${newHex.length} HEX, ${newNex.length} NEX, ${newVfs.length} VF`);
+  if (newHex.length > 0) addLog(job, `🔍 HEX[0]: ${JSON.stringify(newHex[0])}`);
   await prisma.$transaction([
     prisma.kandidat.createMany({ data: newKandidaten, skipDuplicates: true }),
     prisma.hauptexperte.createMany({ data: newHex, skipDuplicates: true }),
@@ -176,33 +189,38 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
     if (!kandidatId) continue;
 
     const noteData = {
-      fachrichtung:         row['Fachrichtung']         ?? null,
-      hauptexperteId:       parseInt(row['IdHEX'])      || null,
-      nebenexperteId:       parseInt(row['IdNEX'])      || null,
-      vfId:                 parseInt(row['IdVF'])        || null,
-      punkteTeil1Vf:        parseInt(row['PunkteTeil1Vf'])     || null,
-      punkteTeil2Vf:        parseInt(row['PunkteTeil2Vf'])     || null,
-      noteTeil1Vf:          parseFloat(row['NoteTeil1Vf'])     || null,
-      noteTeil2Vf:          parseFloat(row['NoteTeil2Vf'])     || null,
-      punkteTeil1:          parseInt(row['PunkteTeil1'])       || null,
-      punkteTeil2:          parseInt(row['PunkteTeil2'])       || null,
-      punkteTeil3:          parseInt(row['PunkteTeil3'])       || null,
-      noteTeil1:            parseFloat(row['NoteTeil1'])       || null,
-      noteTeil2:            parseFloat(row['NoteTeil2'])       || null,
-      noteTeil3:            parseFloat(row['NoteTeil3'])       || null,
-      notePa:               parseFloat(row['Note PA'])         || null,  // ← 'Note PA' not 'NotePA'
-      noteTeil1Errechnet:   parseFloat(row['NoteTeil1Errechnet'])  || null,
-      noteTeil2Errechnet:   parseFloat(row['NoteTeil2Errechnet'])  || null,
-      noteTeil3Errechnet:   parseFloat(row['NoteTeil3Errechnet'])  || null,
-      notePaErrechnet:      parseFloat(row['NotePAErrechnet'])     || null,
+      fachrichtung:         row['Fachrichtung']         ?? undefined,  // don't overwrite with null
+      hauptexperteId:       parseInt(row['IdHEX'])      || undefined,
+      nebenexperteId:       parseInt(row['IdNEX'])      || undefined,
+      vfId:                 parseInt(row['IdVF'])        || undefined,
+      punkteTeil1Vf:        parseInt(row['PunkteTeil1Vf'])     || undefined,
+      punkteTeil2Vf:        parseInt(row['PunkteTeil2Vf'])     || undefined,
+      noteTeil1Vf:          parseFloat(row['NoteTeil1Vf'])     || undefined,
+      noteTeil2Vf:          parseFloat(row['NoteTeil2Vf'])     || undefined,
+      punkteTeil1:          parseInt(row['PunkteTeil1'])       || undefined,
+      punkteTeil2:          parseInt(row['PunkteTeil2'])       || undefined,
+      punkteTeil3:          parseInt(row['PunkteTeil3'])       || undefined,
+      noteTeil1:            parseFloat(row['NoteTeil1'])       || undefined,
+      noteTeil2:            parseFloat(row['NoteTeil2'])       || undefined,
+      noteTeil3:            parseFloat(row['NoteTeil3'])       || undefined,
+      notePa:               parseFloat(row['Note PA'])         || undefined,
+      noteTeil1Errechnet:   parseFloat(row['NoteTeil1Errechnet'])  || undefined,
+      noteTeil2Errechnet:   parseFloat(row['NoteTeil2Errechnet'])  || undefined,
+      noteTeil3Errechnet:   parseFloat(row['NoteTeil3Errechnet'])  || undefined,
+      notePaErrechnet:      parseFloat(row['NotePAErrechnet'])     || undefined,
     };
+
+    // Strip undefined keys so Prisma ignores missing columns on updates
+    const noteDataClean = Object.fromEntries(
+      Object.entries(noteData).filter(([, v]) => v !== undefined)
+    );
 
     const existing = await prisma.notenuebersicht.findUnique({ where: { kandidatId } });
     if (existing) {
-      await prisma.notenuebersicht.update({ where: { kandidatId }, data: noteData });
+      await prisma.notenuebersicht.update({ where: { kandidatId }, data: noteDataClean });
       updated++;
     } else {
-      await prisma.notenuebersicht.create({ data: { kandidatId, ...noteData } });
+      await prisma.notenuebersicht.create({ data: { kandidatId, ...noteDataClean } });
       created++;
     }
 
@@ -223,7 +241,8 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
 
   let cookies = data.cookies;
   if (data.roleUrl && data.roleUrl !== '#') {
-    cookies = await pkorgSwitchRole(cookies, data.roleUrl);
+    const switchResult = await pkorgSwitchRole(cookies, data.roleUrl);
+    cookies = switchResult.cookies;
     addLog(job, '✅ Role switched');
   }
 
@@ -237,23 +256,29 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
   const rows: any[] = XLSX.utils.sheet_to_json(sheet);
 
   addLog(job, `📋 Found ${rows.length} rows, updating Kandidaten & VFs...`);
+  if (rows.length > 0) {
+    addLog(job, `🔑 DF-Keys: ${Object.keys(rows[0]).join(' | ')}`);
+    addLog(job, `🔍 DF-Row0: ${JSON.stringify(rows[0])}`);
+  }
 
   let updatedK = 0;
   let updatedV = 0;
 
   for (const row of rows) {
-    // Real PKOrg column names (verified from actual Excel download)
-    const kId = parseInt(row['Kandidat:in ID']);
+    // Durchführungsübersicht (nauswertungid=839) uses different column names than Notenübersicht
+    const kId = parseInt(row['KandidatID'] ?? row['Kandidat:in ID']);
     if (kId) {
       try {
         await prisma.kandidat.update({
           where: { id: kId },
           data: {
-            mail:     row['E-Mail KAND']   || undefined,
-            telefon:  row['Telefon']        || undefined,
-            firma:    row['FirmaGe KAND']   || undefined,
-            plz:      String(row['Plz (G) KAND'] ?? '') || undefined,
-            ort:      row['OrtGe KAND']     || undefined,
+            mail:       row['MailKAN']    || row['E-Mail KAND'] || undefined,
+            telefon:    row['Telefon']                          || undefined,
+            geschlecht: row['GeschlechtKAN']                   || undefined,
+            titel:      row['TitelKAN']                        || undefined,
+            firma:      row['FirmaGeKAN'] || row['FirmaGe KAND'] || undefined,
+            plz:        String(row['PlzGeKAN'] ?? row['Plz (G) KAND'] ?? '') || undefined,
+            ort:        row['OrtGeKAN']  || row['OrtGe KAND']  || undefined,
           },
         });
         updatedK++;
@@ -263,16 +288,34 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
     const vfId = parseInt(row['NpersidVF']);
     if (vfId) {
       try {
-        await prisma.vf.update({
+        await prisma.vf.upsert({
           where: { id: vfId },
-          data: {
-            mail:      row['E-Mail VF']     || undefined,
-            telefon:   row['Telefon']        || undefined,
-            geschlecht: row['Geschlecht VF'] || undefined,
+          create: {
+            id: vfId,
+            vorname: row['VornameVF'] ?? row['Vorname VF'] ?? '',
+            nachname: row['NachnameVF'] ?? row['Nachname VF'] ?? '',
+            mail:       row['MailVF']   || row['E-Mail VF'] || undefined,
+            telefon:    row['Telefon']                       || undefined,
+            geschlecht: row['GeschlechtVF']                  || undefined,
+            titel:      row['TitelVF']                       || undefined,
+            firma:      row['FirmaVF']                       || undefined,
+            plz:        String(row['PlzVF'] ?? '') || undefined,
+            ort:        row['OrtVF']               || undefined,
+          },
+          update: {
+            mail:       row['MailVF']   || row['E-Mail VF'] || undefined,
+            telefon:    row['Telefon']                       || undefined,
+            geschlecht: row['GeschlechtVF']                  || undefined,
+            titel:      row['TitelVF']                       || undefined,
+            firma:      row['FirmaVF']                       || undefined,
+            plz:        String(row['PlzVF'] ?? '') || undefined,
+            ort:        row['OrtVF']               || undefined,
           },
         });
         updatedV++;
-      } catch { /* VF may not exist yet */ }
+      } catch (e) {
+        addLog(job, `⚠️ VF ${vfId}: ${(e as Error).message}`);
+      }
     }
   }
 
@@ -286,7 +329,8 @@ async function handleDownloadPortfolios(job: Job, data: JobData) {
   await job.updateProgress(0);
 
   if (data.roleUrl && data.roleUrl !== '#') {
-    await pkorgSwitchRole(data.cookies, data.roleUrl);
+    const switchResult = await pkorgSwitchRole(data.cookies, data.roleUrl);
+    data.cookies = switchResult.cookies;
     addLog(job, '✅ Role switched');
   }
 
@@ -294,7 +338,9 @@ async function handleDownloadPortfolios(job: Job, data: JobData) {
   const nmandantid = await pkorgGetMandantId(data.cookies);
   addLog(job, `📋 Mandant ID: ${nmandantid}`);
 
-  const portfoliosDir = path.join(env.MEDIA_DIR, 'portfolios');
+  const portfoliosDir = data.fachrichtung
+    ? path.join(env.MEDIA_DIR, 'portfolios', data.fachrichtung)
+    : path.join(env.MEDIA_DIR, 'portfolios');
   fs.mkdirSync(portfoliosDir, { recursive: true });
 
   const kandidaten = await prisma.kandidat.findMany();

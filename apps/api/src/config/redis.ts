@@ -1,7 +1,7 @@
-import Redis from 'ioredis';
+import Redis, { type RedisOptions } from 'ioredis';
 import { env } from './env.js';
 
-function makeRedis(options: ConstructorParameters<typeof Redis>[1] = {}): Redis | null {
+function makeRedis(options: RedisOptions = {}): Redis | null {
   if (!env.REDIS_URL) return null;
   const client = new Redis(env.REDIS_URL, {
     enableOfflineQueue: false,

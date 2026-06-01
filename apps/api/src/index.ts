@@ -12,7 +12,7 @@ async function main() {
   await prisma.$connect();
   logger.info('✅ Database connected');
 
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     logger.info(`🚀 API server running on http://localhost:${PORT}`);
     logger.info(`   Environment: ${env.NODE_ENV}`);
   });

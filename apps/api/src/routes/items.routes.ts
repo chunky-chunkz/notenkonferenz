@@ -181,12 +181,17 @@ itemsRouter.get('/my', async (req: Request, res: Response, next: NextFunction) =
 itemsRouter.get('/submitted', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const fachrichtungFilter = buildFachrichtungFilter(req);
+    const pkorgRoleType = req.session.activePkorgRoleType;
+
+    // CEX sees only dossiers that experts have visiert (ready for conference).
+    // EXP/VEX see their own submitted/visiert items (scoped by fachrichtungFilter).
+    const statusFilter: object = pkorgRoleType === 'CEX'
+      ? { nkVisiert: true }
+      : { OR: [{ nkAbgegeben: true }, { nkVisiert: true }] };
+
     const items = await (prisma.notenuebersicht as any).findMany({
       where: {
-        OR: [
-          { nkAbgegeben: true },
-          { nkVisiert: true },
-        ],
+        ...statusFilter,
         ...fachrichtungFilter,
       },
       include: {
@@ -283,6 +288,39 @@ itemsRouter.post('/:kandidatId/submit', async (req: Request, res: Response, next
     });
 
     await logAction(userId, `Submitted dossier for ${item.kandidat?.nachname}`, before, JSON.stringify(updated));
+    res.json({ item: updated });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── POST /api/items/:kandidatId/visieren ─────────────────────────────────────
+itemsRouter.post('/:kandidatId/visieren', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const kandidatId = parseInt(req.params.kandidatId, 10);
+    const userId = req.session.userId!;
+    const role = effectiveRole(req);
+
+    const where =
+      role === 'ADMIN' || role === 'STAFF'
+        ? { kandidatId }
+        : { kandidatId, pexUserId: userId };
+
+    const item = await prisma.notenuebersicht.findFirst({ where, include: { kandidat: true } });
+    if (!item) {
+      throw new AppError(404, 'not_found', 'Dossier nicht gefunden oder nicht zugewiesen');
+    }
+    if ((item as any).nkVisiert) {
+      throw new AppError(400, 'already_validated', 'Dossier ist bereits visiert');
+    }
+
+    const before = JSON.stringify(item);
+    const updated = await (prisma.notenuebersicht as any).update({
+      where: { id: item.id },
+      data: { nkVisiert: true, nkAbgegeben: true, nkTimestamp: new Date() },
+    });
+
+    await logAction(userId, `Visiert dossier for ${item.kandidat?.nachname}`, before, JSON.stringify(updated));
     res.json({ item: updated });
   } catch (err) {
     next(err);

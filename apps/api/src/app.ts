@@ -19,6 +19,10 @@ import { pdfRouter } from './routes/pdf.routes.js';
 
 export const app = express();
 
+// Trust the first proxy (Render / nginx) so Express sees the real protocol and IP.
+// Required for secure session cookies to work correctly behind a reverse proxy.
+app.set('trust proxy', 1);
+
 // ─── Global Middleware ───────────────────────────────────────────────────────
 
 app.use(helmet());
@@ -51,6 +55,7 @@ app.use(session({
   secret: env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  proxy: true,
   cookie: {
     httpOnly: true,
     secure: env.NODE_ENV === 'production',

@@ -93,6 +93,13 @@ authRouter.post('/login', async (req: Request, res: Response, next: NextFunction
           req.session.save((err) => (err ? reject(err) : resolve())),
         );
 
+        logger.info('PKOrg login session saved', {
+          sessionID: req.sessionID,
+          userId: user.id,
+          fachrichtung,
+          roleType,
+        });
+
         res.json({
           user: { id: user.id, email: user.email, role: user.role, createdAt: user.createdAt.toISOString() },
           hasPkorgSession: true,

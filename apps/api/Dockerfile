@@ -31,8 +31,9 @@ COPY --from=build /app/packages/shared/package.json packages/shared/package.json
 COPY --from=build /app/apps/api/dist apps/api/dist
 COPY --from=build /app/apps/api/prisma apps/api/prisma
 COPY --from=build /app/apps/api/package.json apps/api/package.json
+COPY apps/api/render-start.sh apps/api/render-start.sh
 
-RUN mkdir -p /app/uploads /app/media
+RUN chmod +x apps/api/render-start.sh && mkdir -p /app/uploads /app/media
 
 EXPOSE 3001
-CMD ["sh", "-c", "echo 'Running Prisma db push...' && npx prisma db push --schema=apps/api/prisma/schema.prisma && echo 'Starting BullMQ worker...' && node apps/api/dist/worker.js & echo 'Starting API...' && node apps/api/dist/index.js"]
+CMD ["sh", "apps/api/render-start.sh"]

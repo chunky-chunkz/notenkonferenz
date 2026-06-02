@@ -12,12 +12,17 @@ echo "Starting API..."
 node apps/api/dist/index.js &
 API_PID=$!
 
-trap 'echo "Stopping API and worker..."; kill "$API_PID" "$WORKER_PID" 2>/dev/null || true; wait' TERM INT
+# On TERM or INT, kill both processes cleanly
+_term() {
+  echo "Caught signal — stopping worker (pid $WORKER_PID) and API (pid $API_PID)..."
+  kill "$WORKER_PID" "$API_PID" 2>/dev/null || true
+}
+trap _term TERM INT
 
-# If either process exits, stop the other one and exit so Render restarts cleanly.
-wait -n "$API_PID" "$WORKER_PID"
+# Wait for whichever process exits first
+wait -n "$WORKER_PID" "$API_PID"
 EXIT_CODE=$?
-echo "One process exited with code $EXIT_CODE; stopping remaining process..."
-kill "$API_PID" "$WORKER_PID" 2>/dev/null || true
-wait 2>/dev/null || true
-exit "$EXIT_CODE"
+
+# Kill the survivor and exit with the first process's exit code
+kill "$WORKER_PID" "$API_PID" 2>/dev/null || true
+exit $EXIT_CODE

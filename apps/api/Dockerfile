@@ -35,4 +35,4 @@ COPY --from=build /app/apps/api/package.json apps/api/package.json
 RUN mkdir -p /app/uploads /app/media
 
 EXPOSE 3001
-CMD ["sh", "-c", "npx prisma db push --schema=apps/api/prisma/schema.prisma && node apps/api/dist/index.js"]
+CMD ["sh", "-c", "echo 'Running Prisma db push...' && npx prisma db push --schema=apps/api/prisma/schema.prisma && echo 'Starting BullMQ worker...' && node apps/api/dist/worker.js & echo 'Starting API...' && node apps/api/dist/index.js"]

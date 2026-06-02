@@ -9,7 +9,7 @@ export function DetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const id = parseInt(kandidatId!, 10);
-  const { isStaff } = useAuth();
+  const { isStaff, isCex, isAdmin } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ['item', id],
@@ -25,6 +25,17 @@ export function DetailPage() {
     },
     onError: (err: any) => toast.error(err.message),
   });
+
+  const visierenMutation = useMutation({
+    mutationFn: () => itemsApi.visieren(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['item', id] });
+      toast.success('Dossier visiert');
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const canVisieren = isCex || isAdmin || isStaff;
 
   if (isLoading) return <div className="text-center py-12">Lade...</div>;
   if (!data?.item) return <div className="text-center py-12">Nicht gefunden</div>;
@@ -78,28 +89,38 @@ export function DetailPage() {
                 </td>
                 <td className="px-3 py-2">
                   <div className="flex gap-2 flex-wrap">
-                    {/* VEX/EXP: Bestätigen (nur wenn noch nicht abgegeben) */}
-                    {item.nkAbgegeben && (
-                      <span className="px-3 py-1 text-sm rounded bg-green-100 text-green-800">
-                        ✅ Abgegeben
-                      </span>
+                    {item.nkChange ? (
+                      <span className="px-3 py-1 text-sm rounded bg-yellow-100 text-yellow-800">✎ Angepasst</span>
+                    ) : item.nkVisiert ? (
+                      <span className="px-3 py-1 text-sm rounded bg-green-100 text-green-800">✅ Visiert</span>
+                    ) : item.nkAbgegeben ? (
+                      <span className="px-3 py-1 text-sm rounded bg-blue-100 text-blue-800">📤 Abgegeben</span>
+                    ) : null}
+                    {canVisieren && !item.nkVisiert && (
+                      <button
+                        onClick={() => visierenMutation.mutate()}
+                        disabled={visierenMutation.isPending}
+                        className="px-3 py-1 text-sm rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                      >
+                        ✅ Visieren
+                      </button>
+                    )}
+                    {canVisieren && (
+                      <Link
+                        to={`/change/${id}`}
+                        className="px-3 py-1 text-sm rounded bg-yellow-500 text-white hover:bg-yellow-600"
+                      >
+                        ✎ Anpassen
+                      </Link>
                     )}
                     {isStaff && (
-                      <>
-                        <Link
-                          to={`/change/${id}`}
-                          className="px-3 py-1 text-sm rounded bg-yellow-500 text-white hover:bg-yellow-600"
-                        >
-                          ✎ Anpassen
-                        </Link>
-                        <button
-                          onClick={() => dropMutation.mutate()}
-                          disabled={dropMutation.isPending}
-                          className="px-3 py-1 text-sm rounded bg-red-600 text-white hover:bg-red-700"
-                        >
-                          ↩ Rückgabe
-                        </button>
-                      </>
+                      <button
+                        onClick={() => dropMutation.mutate()}
+                        disabled={dropMutation.isPending}
+                        className="px-3 py-1 text-sm rounded bg-red-600 text-white hover:bg-red-700"
+                      >
+                        ↩ Rückgabe
+                      </button>
                     )}
                   </div>
                 </td>

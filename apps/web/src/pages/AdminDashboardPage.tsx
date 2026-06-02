@@ -47,11 +47,7 @@ export function AdminDashboardPage() {
       await queryClient.invalidateQueries({ queryKey: ['missing-portfolios'] });
       await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       await queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      toast.success('PKOrg-Rolle gewechselt & Datenbank geleert – starte Imports automatisch…');
-      // Auto-start imports after role switch
-      prevJobStatus.current = null;
-      setAutoImportStep('nu');
-      importNuMutation.mutate();
+      toast.success('PKOrg-Rolle gewechselt – Imports können jetzt manuell gestartet werden.');
     },
     onError: (err: any) => toast.error(err.message),
   });

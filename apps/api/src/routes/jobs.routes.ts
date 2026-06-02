@@ -15,22 +15,25 @@ function requireQueue(res: Response): boolean {
 }
 
 // ─── GET /api/jobs ────────────────────────────────────────────────────────────
-jobsRouter.get('/', async (_req: Request, res: Response, next: NextFunction) => {
+jobsRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!requireQueue(res)) return;
-    const jobs = await importQueue!.getJobs(['active', 'waiting', 'delayed', 'failed', 'completed'], 0, 30);
+    const userId = req.session.userId;
+    const jobs = await importQueue!.getJobs(['active', 'waiting', 'delayed', 'failed', 'completed'], 0, 100);
     const result = await Promise.all(
-      jobs.map(async (job) => {
-        const state = await job.getState();
-        return {
-          jobId: job.id,
-          type: job.name,
-          status: state,
-          progress: typeof job.progress === 'number' ? job.progress : 0,
-          createdAt: job.timestamp,
-          error: job.failedReason ?? undefined,
-        };
-      }),
+      jobs
+        .filter((job) => (job.data as any).userId === userId)
+        .map(async (job) => {
+          const state = await job.getState();
+          return {
+            jobId: job.id,
+            type: job.name,
+            status: state,
+            progress: typeof job.progress === 'number' ? job.progress : 0,
+            createdAt: job.timestamp,
+            error: job.failedReason ?? undefined,
+          };
+        }),
     );
     // Sort newest first
     result.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
@@ -45,7 +48,7 @@ jobsRouter.get('/:jobId', async (req: Request, res: Response, next: NextFunction
   try {
     if (!requireQueue(res)) return;
     const job = await importQueue!.getJob(req.params.jobId);
-    if (!job) {
+    if (!job || (job.data as any).userId !== req.session.userId) {
       throw new AppError(404, 'not_found', 'Job not found');
     }
 
@@ -72,7 +75,7 @@ jobsRouter.post('/:jobId/cancel', async (req: Request, res: Response, next: Next
   try {
     if (!requireQueue(res)) return;
     const job = await importQueue!.getJob(req.params.jobId);
-    if (!job) {
+    if (!job || (job.data as any).userId !== req.session.userId) {
       throw new AppError(404, 'not_found', 'Job not found');
     }
 
@@ -95,7 +98,7 @@ jobsRouter.delete('/:jobId', async (req: Request, res: Response, next: NextFunct
   try {
     if (!requireQueue(res)) return;
     const job = await importQueue!.getJob(req.params.jobId);
-    if (!job) {
+    if (!job || (job.data as any).userId !== req.session.userId) {
       throw new AppError(404, 'not_found', 'Job not found');
     }
 

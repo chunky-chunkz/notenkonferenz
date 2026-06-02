@@ -87,8 +87,19 @@ authRouter.post('/login', async (req: Request, res: Response, next: NextFunction
         req.session.activePkorgFachrichtung = fachrichtung;
         req.session.activePkorgRoleType = roleType ?? undefined;
 
+        // Explicitly save the session before responding to avoid a race condition
+        // where the subsequent /me request arrives before the store write completes.
+        await new Promise<void>((resolve, reject) =>
+          req.session.save((err) => (err ? reject(err) : resolve())),
+        );
+
         res.json({
           user: { id: user.id, email: user.email, role: user.role, createdAt: user.createdAt.toISOString() },
+          hasPkorgSession: true,
+          pkorgRoles: roles,
+          activePkorgRole: firstRole ?? null,
+          activePkorgFachrichtung: fachrichtung,
+          activePkorgRoleType: roleType,
         });
         return;
       } catch (err) {

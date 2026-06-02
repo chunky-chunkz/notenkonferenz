@@ -62,10 +62,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string, twoFactorCode?: string) => {
     const data = await authApi.login({ email, password, twoFactorCode });
     setUser(data.user);
-    try {
-      await refreshMe();
-    } catch {
-      // ignore
+    // Apply PKOrg session data directly from the login response (avoids a race
+    // condition where the /me call arrives before the session store write completes).
+    if (data.hasPkorgSession !== undefined) {
+      applyMeData(data as any);
+    } else {
+      try {
+        await refreshMe();
+      } catch {
+        // ignore
+      }
     }
   };
 

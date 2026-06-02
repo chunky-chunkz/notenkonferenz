@@ -51,7 +51,14 @@ async function request<T>(path: string, options: FetchOptions = {}): Promise<T> 
 
 export const authApi = {
   login: (data: { email: string; password: string; twoFactorCode?: string }) =>
-    request<{ user: any }>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+    request<{
+      user: any;
+      hasPkorgSession?: boolean;
+      pkorgRoles?: { text: string; url: string }[];
+      activePkorgRole?: { text: string; url: string } | null;
+      activePkorgFachrichtung?: string | null;
+      activePkorgRoleType?: string | null;
+    }>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
 
   register: (data: { email: string; password: string; passwordRepeat: string }) =>
     request<{ user: any }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),

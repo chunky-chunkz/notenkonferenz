@@ -269,6 +269,60 @@ itemsRouter.get('/missing-grades', async (req: Request, res: Response, next: Nex
   }
 });
 
+// ─── POST /api/items/collect-random ──────────────────────────────────────────
+// MUST be registered before any /:kandidatId routes so Express does not
+// swallow the literal path segment "collect-random" as a kandidatId value.
+itemsRouter.post('/collect-random', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.session.userId!;
+
+    // Build the fachrichtung/role scope.  For EXP users buildFachrichtungFilter
+    // returns { pexUserId: userId, fachrichtung: ... } which would conflict with
+    // the pexUserId: null search below.  Extract only the fachrichtung part so we
+    // can find genuinely unassigned items while still respecting scope.
+    const fullFilter: any = buildFachrichtungFilter(req) ?? {};
+    const scopeFilter: any = {};
+    if (fullFilter.fachrichtung) scopeFilter.fachrichtung = fullFilter.fachrichtung;
+
+    const noteMin = req.body.noteMin !== undefined ? parseFloat(req.body.noteMin) : undefined;
+    const noteMax = req.body.noteMax !== undefined ? parseFloat(req.body.noteMax) : undefined;
+    const noteFilter = (noteMin !== undefined || noteMax !== undefined)
+      ? { notePaErrechnet: { gte: noteMin, lte: noteMax } }
+      : {};
+
+    // Find unassigned, not-yet-visiert items within the user's scope.
+    let candidates = await prisma.notenuebersicht.findMany({
+      where: { pexUserId: null, nkVisiert: false, ...noteFilter, ...scopeFilter },
+      take: 20,
+    });
+
+    // If the note-range filter matched nothing, fall back to any unassigned item in scope.
+    if (candidates.length === 0 && Object.keys(noteFilter).length > 0) {
+      candidates = await prisma.notenuebersicht.findMany({
+        where: { pexUserId: null, nkVisiert: false, ...scopeFilter },
+        take: 20,
+      });
+    }
+
+    if (candidates.length === 0) {
+      throw new AppError(404, 'no_items', 'Kein passendes Dossier gefunden');
+    }
+
+    const item = candidates[Math.floor(Math.random() * candidates.length)];
+
+    const updated = await prisma.notenuebersicht.update({
+      where: { id: item.id },
+      data: { pexUserId: userId },
+      include: { kandidat: true },
+    });
+
+    await logAction(userId, `Collected random item for ${updated.kandidat?.nachname}`, null, JSON.stringify(updated));
+    res.json({ item: updated });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ─── POST /api/items/:kandidatId/submit ──────────────────────────────────────
 itemsRouter.post('/:kandidatId/submit', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -374,62 +428,6 @@ itemsRouter.get('/:kandidatId', async (req: Request, res: Response, next: NextFu
 // ─── POST /api/items/collect ─────────────────────────────────────────────────
 const collectSchema = z.object({
   typ: z.enum(['ungenuegend', 'knapp', 'gut', 'sehrgut']),
-});
-
-// ─── POST /api/items/collect-random ──────────────────────────────────────────
-itemsRouter.post('/collect-random', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const userId = req.session.userId!;
-    const fachrichtungFilter = buildFachrichtungFilter(req);
-
-    // Optional note range filter
-    const noteMin = req.body.noteMin !== undefined ? parseFloat(req.body.noteMin) : undefined;
-    const noteMax = req.body.noteMax !== undefined ? parseFloat(req.body.noteMax) : undefined;
-    const noteFilter = (noteMin !== undefined || noteMax !== undefined)
-      ? { notePaErrechnet: { gte: noteMin, lte: noteMax } }
-      : {};
-
-    // Find random unassigned + not-yet-validated item
-    let candidates = await prisma.notenuebersicht.findMany({
-      where: {
-        pexUserId: null,
-        nkVisiert: false,
-        ...noteFilter,
-        ...fachrichtungFilter,
-      },
-      take: 20,
-    });
-
-    // Fallback: if no candidates match the note range, pick any available dossier
-    if (candidates.length === 0 && Object.keys(noteFilter).length > 0) {
-      candidates = await prisma.notenuebersicht.findMany({
-        where: {
-          pexUserId: null,
-          nkVisiert: false,
-          ...fachrichtungFilter,
-        },
-        take: 20,
-      });
-    }
-
-    if (candidates.length === 0) {
-      throw new AppError(404, 'no_items', 'Keine verfügbaren Dossiers in diesem Bereich');
-    }
-
-    const item = candidates[Math.floor(Math.random() * candidates.length)];
-
-    const updated = await prisma.notenuebersicht.update({
-      where: { id: item.id },
-      data: { pexUserId: userId },
-      include: { kandidat: true },
-    });
-
-    await logAction(userId, `Collected random item for ${updated.kandidat?.nachname}`, null, JSON.stringify(updated));
-
-    res.json({ item: updated });
-  } catch (err) {
-    next(err);
-  }
 });
 
 itemsRouter.post('/collect', async (req: Request, res: Response, next: NextFunction) => {

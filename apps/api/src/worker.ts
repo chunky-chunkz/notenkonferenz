@@ -95,6 +95,63 @@ process.on('uncaughtException', (err) => {
 
 // ─── Job Handlers ────────────────────────────────────────────────────────────
 
+// ─── pexUserId matching helpers ──────────────────────────────────────────────
+
+type UserRow = { id: number; email: string };
+
+/** Candidate column names for the HEX/PEX email field in PKOrg Excels. */
+const HEX_EMAIL_CANDIDATES = [
+  'MailHEX', 'E-Mail HEX', 'E-MailHEX', 'MailPEX', 'E-Mail PEX', 'Mail HEX',
+];
+
+/**
+ * Scan the first data row to find which email column actually exists.
+ * Returns the matched column name, or null if none of the candidates are present.
+ */
+function detectEmailColumn(firstRow: any): string | null {
+  return HEX_EMAIL_CANDIDATES.find((c) => firstRow[c] !== undefined) ?? null;
+}
+
+/** Extract the HEX/PEX email from a row using the detected column (or all candidates as fallback). */
+function extractHexEmail(row: any, detectedCol: string | null): string {
+  if (detectedCol) return (row[detectedCol] ?? '').toString().trim();
+  // fallback: try all candidates in order
+  for (const c of HEX_EMAIL_CANDIDATES) {
+    const v = (row[c] ?? '').toString().trim();
+    if (v) return v;
+  }
+  return '';
+}
+
+/**
+ * Normalise a name fragment for fuzzy email matching:
+ * lowercase, strip non-alphanumeric except German umlauts.
+ */
+function normName(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9äöüß]/g, '');
+}
+
+/**
+ * Fallback: try to match an expert's vorname + nachname against users' email local parts.
+ * Only accepts a match when exactly ONE user's email local part contains both the full
+ * normalised lastname (≥3 chars) and the first ≥2 chars of the firstname — this avoids
+ * false positives while still handling common patterns like "h.muster@bzz.ch".
+ * Returns the matched user id or undefined.
+ */
+function matchByName(vorname: string, nachname: string, users: UserRow[]): number | undefined {
+  const v = normName(vorname);
+  const n = normName(nachname);
+  if (n.length < 3 || v.length < 2) return undefined;
+
+  const matches = users.filter((u) => {
+    const local = normName(u.email.split('@')[0]);
+    return local.includes(n) && local.includes(v.slice(0, 2));
+  });
+  return matches.length === 1 ? matches[0].id : undefined;
+}
+
+// ─── Notenübersicht import ────────────────────────────────────────────────────
+
 async function handleImportNotenuebersicht(job: Job, data: JobData) {
   addLog(job, '⏳ Starting Notenübersicht import...');
   await job.updateProgress(5);
@@ -122,24 +179,36 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
   await job.updateProgress(30);
 
   addLog(job, `📋 Found ${rows.length} rows`);
-  if (rows.length > 0) {
-    addLog(job, `🔑 Keys: ${Object.keys(rows[0]).join(' | ')}`);
-    addLog(job, `🔍 Row0: ${JSON.stringify(rows[0])}`);
+  if (rows.length === 0) {
+    addLog(job, '⚠️ Excel is empty — nothing to import');
+    await job.updateProgress(100);
+    return;
   }
 
-  // Build email → userId map for pexUserId matching
+  // ── Column diagnostics ────────────────────────────────────────────────────
+  const allColumns = Object.keys(rows[0]);
+  addLog(job, `🔑 All columns (${allColumns.length}): ${allColumns.join(' | ')}`);
+  addLog(job, `🔍 Row0 sample: ${JSON.stringify(rows[0])}`);
+
+  const emailCol = detectEmailColumn(rows[0]);
+  if (emailCol) {
+    addLog(job, `📧 Detected HEX/PEX email column: "${emailCol}"`);
+    // Show up to 5 sample email values so we can verify the column content
+    const samples = rows.slice(0, 5)
+      .map((r) => extractHexEmail(r, emailCol))
+      .filter(Boolean);
+    addLog(job, `📧 Sample email values: ${samples.join(', ') || '(all empty)'}`);
+  } else {
+    addLog(job, `⚠️ No HEX/PEX email column found. Tried: ${HEX_EMAIL_CANDIDATES.join(', ')}`);
+    addLog(job, '⚠️ pexUserId matching will fall back to name heuristic only. ' +
+      'Set EXP_SEES_FACHRICHTUNG=true as a temporary workaround if experts see 0 candidates.');
+  }
+
+  // ── Build user lookup maps ─────────────────────────────────────────────────
   const allUsers = await prisma.user.findMany({ select: { id: true, email: true } });
   const usersByEmail = new Map<string, number>();
   for (const u of allUsers) usersByEmail.set(u.email.toLowerCase(), u.id);
-  addLog(job, `👥 Loaded ${allUsers.length} users for pexUserId matching`);
-
-  // Helper: extract HEX/PEX email from a row trying all known PKOrg column name variants
-  function resolveHexEmail(row: any): string {
-    return (
-      row['MailHEX'] ?? row['E-Mail HEX'] ?? row['E-MailHEX'] ??
-      row['MailPEX'] ?? row['E-Mail PEX'] ?? row['Mail HEX'] ?? ''
-    ).toString().trim();
-  }
+  addLog(job, `👥 ${allUsers.length} users loaded for matching: ${allUsers.map((u) => u.email).join(', ')}`);
 
   // Collect entities
   const existingKandidaten = new Set((await prisma.kandidat.findMany({ select: { id: true } })).map((k) => k.id));
@@ -153,7 +222,6 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
   const newVfs: any[] = [];
 
   for (const row of rows) {
-    // Real PKOrg column names (verified from actual Excel download)
     const kId = parseInt(row['Kandidat:in ID']);
     if (kId && !existingKandidaten.has(kId)) {
       newKandidaten.push({ id: kId, vorname: row['Vorname KAND'] ?? '', nachname: row['Nachname KAND'] ?? '' });
@@ -162,7 +230,7 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
 
     const hexId = parseInt(row['IdHEX']);
     if (hexId && !existingHex.has(hexId)) {
-      const hexMail = resolveHexEmail(row) || undefined;
+      const hexMail = extractHexEmail(row, emailCol) || undefined;
       newHex.push({ id: hexId, vorname: row['VornameHEX'] ?? '', nachname: row['NachnameHEX'] ?? '', mail: hexMail });
       existingHex.add(hexId);
     }
@@ -193,44 +261,89 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
   addLog(job, `✅ Created: ${newKandidaten.length} Kandidaten, ${newHex.length} HEX, ${newNex.length} NEX, ${newVfs.length} VF`);
   await job.updateProgress(50);
 
-  // Upsert Notenuebersichten
+  // ── Upsert Notenuebersichten ───────────────────────────────────────────────
   addLog(job, '📝 Upserting Notenuebersichten...');
   let created = 0;
   let updated = 0;
-  let pexMatched = 0;
+  let pexByEmail = 0;
+  let pexByName = 0;
   let pexUnmatched = 0;
-  let pexNoEmail = 0;
+  let pexNoIdentifier = 0;
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const kandidatId = parseInt(row['Kandidat:in ID']);
     if (!kandidatId) continue;
 
-    // Resolve pexUserId from HEX/PEX email column:
-    //   - email found + user matched  → set userId
-    //   - email found + no user match → set null, log warning
-    //   - no email column             → leave undefined (excluded from update, preserves existing)
-    const hexEmail = resolveHexEmail(row).toLowerCase();
+    const hexEmail  = extractHexEmail(row, emailCol).toLowerCase();
+    const hexVorname = (row['VornameHEX'] ?? '').toString().trim();
+    const hexNachname = (row['NachnameHEX'] ?? '').toString().trim();
+
+    // Resolution order:
+    //   1. exact email match
+    //   2. name heuristic (vorname + nachname vs email local part)
+    //   3. no identifier available
+    // For cases 2 and 3 the behaviour depends on whether an email column exists:
+    //   - email col present but empty → null (user not in system)
+    //   - no email col at all         → undefined (don't touch existing pexUserId)
     let resolvedPexUserId: number | null | undefined;
+    let matchMethod = '';
+
     if (hexEmail) {
-      const matchedId = usersByEmail.get(hexEmail);
-      if (matchedId !== undefined) {
-        resolvedPexUserId = matchedId;
-        pexMatched++;
+      const byEmail = usersByEmail.get(hexEmail);
+      if (byEmail !== undefined) {
+        resolvedPexUserId = byEmail;
+        pexByEmail++;
+        matchMethod = 'email';
+      } else {
+        // Email present but no user found → try name fallback
+        const byName = matchByName(hexVorname, hexNachname, allUsers);
+        if (byName !== undefined) {
+          resolvedPexUserId = byName;
+          pexByName++;
+          matchMethod = 'name';
+        } else {
+          resolvedPexUserId = null;
+          pexUnmatched++;
+          addLog(job, `⚠️ No user for HEX email "${hexEmail}" name="${hexVorname} ${hexNachname}" (kandidat ${kandidatId})`);
+        }
+      }
+    } else if (emailCol) {
+      // Column exists but this row's value is empty — try name fallback
+      const byName = matchByName(hexVorname, hexNachname, allUsers);
+      if (byName !== undefined) {
+        resolvedPexUserId = byName;
+        pexByName++;
+        matchMethod = 'name';
       } else {
         resolvedPexUserId = null;
         pexUnmatched++;
         if (pexUnmatched <= 10) {
-          addLog(job, `⚠️ No user for HEX email "${hexEmail}" (kandidat ${kandidatId})`);
+          addLog(job, `⚠️ Empty HEX email, name fallback failed: "${hexVorname} ${hexNachname}" (kandidat ${kandidatId})`);
         }
       }
     } else {
-      resolvedPexUserId = undefined;
-      pexNoEmail++;
+      // No email column at all — try name only, but don't clear existing value on failure
+      const byName = matchByName(hexVorname, hexNachname, allUsers);
+      if (byName !== undefined) {
+        resolvedPexUserId = byName;
+        pexByName++;
+        matchMethod = 'name';
+      } else {
+        resolvedPexUserId = undefined; // preserve existing pexUserId
+        pexNoIdentifier++;
+      }
+    }
+
+    if (matchMethod) {
+      // verbose only for first 5 matches to confirm the logic is working
+      if (pexByEmail + pexByName <= 5) {
+        addLog(job, `✅ pex match [${matchMethod}]: kandidat ${kandidatId} → userId ${resolvedPexUserId}`);
+      }
     }
 
     const noteData = {
-      fachrichtung:         row['Fachrichtung']         ?? undefined,  // don't overwrite with null
+      fachrichtung:         row['Fachrichtung']         ?? undefined,
       hauptexperteId:       parseInt(row['IdHEX'])      || undefined,
       nebenexperteId:       parseInt(row['IdNEX'])      || undefined,
       vfId:                 parseInt(row['IdVF'])        || undefined,
@@ -252,7 +365,7 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
       pexUserId:            resolvedPexUserId,
     };
 
-    // Strip undefined keys so Prisma ignores missing columns on updates
+    // undefined values are stripped so Prisma ignores them on updates
     const noteDataClean = Object.fromEntries(
       Object.entries(noteData).filter(([, v]) => v !== undefined)
     );
@@ -272,7 +385,12 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
   }
 
   addLog(job, `✅ Notenuebersichten: ${created} created, ${updated} updated`);
-  addLog(job, `👤 pexUserId: ${pexMatched} matched, ${pexUnmatched} unmatched (no user found), ${pexNoEmail} rows had no email column`);
+  addLog(job, `👤 pexUserId results: ${pexByEmail} by email, ${pexByName} by name heuristic, ${pexUnmatched} unmatched, ${pexNoIdentifier} had no identifier (preserved existing)`);
+  if (pexByEmail === 0 && pexByName === 0 && rows.length > 0) {
+    addLog(job, '❌ ZERO pexUserId matches — EXP users will see 0 candidates. ' +
+      'Check column names above and verify user emails match the HEX email values in PKOrg. ' +
+      'Set EXP_SEES_FACHRICHTUNG=true to unblock EXP users while debugging.');
+  }
   await logAction(data.userId, 'Notenübersicht imported via job');
   await job.updateProgress(100);
   addLog(job, '✅ Import complete');
@@ -298,33 +416,41 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows: any[] = XLSX.utils.sheet_to_json(sheet);
 
-  addLog(job, `📋 Found ${rows.length} rows, updating Kandidaten & VFs...`);
-  if (rows.length > 0) {
-    addLog(job, `🔑 DF-Keys: ${Object.keys(rows[0]).join(' | ')}`);
-    addLog(job, `🔍 DF-Row0: ${JSON.stringify(rows[0])}`);
+  addLog(job, `📋 Found ${rows.length} rows`);
+  if (rows.length === 0) {
+    addLog(job, '⚠️ Durchführung Excel is empty');
+    await job.updateProgress(100);
+    return;
   }
 
-  // Build email → userId map for pexUserId matching
+  // ── Column diagnostics ────────────────────────────────────────────────────
+  const dfColumns = Object.keys(rows[0]);
+  addLog(job, `🔑 DF columns (${dfColumns.length}): ${dfColumns.join(' | ')}`);
+  addLog(job, `🔍 DF-Row0: ${JSON.stringify(rows[0])}`);
+
+  const dfEmailCol = detectEmailColumn(rows[0]);
+  if (dfEmailCol) {
+    addLog(job, `📧 DF detected HEX/PEX email column: "${dfEmailCol}"`);
+    const samples = rows.slice(0, 5).map((r) => extractHexEmail(r, dfEmailCol)).filter(Boolean);
+    addLog(job, `📧 DF sample email values: ${samples.join(', ') || '(all empty)'}`);
+  } else {
+    addLog(job, `⚠️ DF: No HEX/PEX email column found. Tried: ${HEX_EMAIL_CANDIDATES.join(', ')}`);
+  }
+
+  // ── Build user lookup maps ─────────────────────────────────────────────────
   const allUsers = await prisma.user.findMany({ select: { id: true, email: true } });
   const usersByEmail = new Map<string, number>();
   for (const u of allUsers) usersByEmail.set(u.email.toLowerCase(), u.id);
-
-  // Helper: extract HEX/PEX email from a row trying all known PKOrg column name variants
-  function resolveHexEmail(row: any): string {
-    return (
-      row['MailHEX'] ?? row['E-Mail HEX'] ?? row['E-MailHEX'] ??
-      row['MailPEX'] ?? row['E-Mail PEX'] ?? row['Mail HEX'] ?? ''
-    ).toString().trim();
-  }
+  addLog(job, `👥 ${allUsers.length} users: ${allUsers.map((u) => u.email).join(', ')}`);
 
   let updatedK = 0;
   let updatedV = 0;
-  let dfPexMatched = 0;
+  let dfPexByEmail = 0;
+  let dfPexByName = 0;
   let dfPexUnmatched = 0;
-  let dfPexNoEmail = 0;
+  let dfPexNoIdentifier = 0;
 
   for (const row of rows) {
-    // Durchführungsübersicht (nauswertungid=839) uses different column names than Notenübersicht
     const kId = parseInt(row['KandidatID'] ?? row['Kandidat:in ID']);
     if (kId) {
       try {
@@ -343,28 +469,54 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
         updatedK++;
       } catch { /* Kandidat may not exist yet */ }
 
-      // Attempt to set pexUserId from HEX/PEX email in this sheet.
-      // This supplements the Notenübersicht import: if that sheet lacked an email column,
-      // the Durchführung sheet may still carry it.
-      const hexEmail = resolveHexEmail(row).toLowerCase();
+      // Supplement pexUserId from this sheet — mirrors NU logic with email + name fallback.
+      const hexEmail    = extractHexEmail(row, dfEmailCol).toLowerCase();
+      const hexVorname  = (row['VornameHEX'] ?? row['Vorname HEX'] ?? '').toString().trim();
+      const hexNachname = (row['NachnameHEX'] ?? row['Nachname HEX'] ?? '').toString().trim();
+
+      let dfPexUserId: number | undefined;
       if (hexEmail) {
-        const matchedId = usersByEmail.get(hexEmail);
-        if (matchedId !== undefined) {
-          try {
-            await prisma.notenuebersicht.updateMany({
-              where: { kandidatId: kId },
-              data: { pexUserId: matchedId },
-            });
-            dfPexMatched++;
-          } catch { /* Notenuebersicht may not exist yet */ }
+        const byEmail = usersByEmail.get(hexEmail);
+        if (byEmail !== undefined) {
+          dfPexUserId = byEmail;
+          dfPexByEmail++;
         } else {
-          dfPexUnmatched++;
-          if (dfPexUnmatched <= 10) {
-            addLog(job, `⚠️ DF: No user for HEX email "${hexEmail}" (kandidat ${kId})`);
+          const byName = matchByName(hexVorname, hexNachname, allUsers);
+          if (byName !== undefined) {
+            dfPexUserId = byName;
+            dfPexByName++;
+          } else {
+            dfPexUnmatched++;
+            if (dfPexUnmatched <= 10) {
+              addLog(job, `⚠️ DF: No user for email "${hexEmail}" name="${hexVorname} ${hexNachname}" (kandidat ${kId})`);
+            }
           }
         }
+      } else if (dfEmailCol) {
+        const byName = matchByName(hexVorname, hexNachname, allUsers);
+        if (byName !== undefined) {
+          dfPexUserId = byName;
+          dfPexByName++;
+        } else {
+          dfPexUnmatched++;
+        }
       } else {
-        dfPexNoEmail++;
+        const byName = matchByName(hexVorname, hexNachname, allUsers);
+        if (byName !== undefined) {
+          dfPexUserId = byName;
+          dfPexByName++;
+        } else {
+          dfPexNoIdentifier++;
+        }
+      }
+
+      if (dfPexUserId !== undefined) {
+        try {
+          await prisma.notenuebersicht.updateMany({
+            where: { kandidatId: kId },
+            data: { pexUserId: dfPexUserId },
+          });
+        } catch { /* Notenuebersicht may not exist yet */ }
       }
     }
 
@@ -403,7 +555,7 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
   }
 
   addLog(job, `✅ Updated: ${updatedK} Kandidaten, ${updatedV} VFs`);
-  addLog(job, `👤 DF pexUserId: ${dfPexMatched} matched, ${dfPexUnmatched} unmatched (no user found), ${dfPexNoEmail} rows had no email column`);
+  addLog(job, `👤 DF pexUserId: ${dfPexByEmail} by email, ${dfPexByName} by name heuristic, ${dfPexUnmatched} unmatched, ${dfPexNoIdentifier} had no identifier`);
   await logAction(data.userId, 'Durchführung imported via job');
   await job.updateProgress(100);
 }

@@ -5,6 +5,7 @@ import { requireAuth, requireVex, effectiveRole } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { logAction } from '../services/logService.js';
 import { uploadPdf } from '../middleware/upload.js';
+import { env } from '../config/env.js';
 
 export const itemsRouter = Router();
 
@@ -24,8 +25,16 @@ function buildFachrichtungFilter(req: Request): object | undefined {
   const keyword = req.session.activePkorgFachrichtung;
   const pkorgRoleType = req.session.activePkorgRoleType; // 'EXP' | 'CEX' | 'VEX' | 'BB' | null
 
-  // EXP (Experte): only their own assigned IPA
+  // EXP (Experte): normally only their own assigned IPA (pexUserId = userId).
+  // When EXP_SEES_FACHRICHTUNG=true the strict per-user filter is replaced by a
+  // fachrichtung-scoped filter (same as CEX/VEX).  Use this ONLY as a temporary
+  // workaround when the PKOrg Excel lacks HEX/PEX email addresses and the import
+  // therefore cannot populate pexUserId reliably.
   if (pkorgRoleType === 'EXP') {
+    if (env.EXP_SEES_FACHRICHTUNG) {
+      if (keyword) return { fachrichtung: { contains: keyword } };
+      return { kandidatId: -1 }; // no fachrichtung → show nothing rather than everything
+    }
     const base: any = { pexUserId: req.session.userId };
     if (keyword) base.fachrichtung = { contains: keyword };
     return base;

@@ -489,3 +489,56 @@ adminRouter.get('/keepalive', async (req: Request, res: Response, next: NextFunc
 adminRouter.get('/last-ping', (req: Request, res: Response) => {
   res.json({ lastPing: req.session.lastPkorgPing ?? '2000-01-01T00:00:00' });
 });
+
+// ─── GET /api/admin/debug/session ────────────────────────────────────────────
+// Diagnostic endpoint: shows session identity + pexUserId coverage for the
+// currently logged-in admin. Use to verify matching worked after an import.
+adminRouter.get('/debug/session', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.session.userId!;
+    const fachrichtung = req.session.activePkorgFachrichtung ?? null;
+
+    const [pexCount, fachrichtungCount, totalCount, sampleAssigned] = await Promise.all([
+      prisma.notenuebersicht.count({ where: { pexUserId: userId } }),
+      fachrichtung
+        ? prisma.notenuebersicht.count({ where: { fachrichtung: { contains: fachrichtung } } })
+        : Promise.resolve(null),
+      prisma.notenuebersicht.count(),
+      prisma.notenuebersicht.findMany({
+        where: { pexUserId: { not: null } },
+        select: {
+          kandidatId: true,
+          fachrichtung: true,
+          pexUserId: true,
+          pexUser: { select: { email: true } },
+        },
+        take: 10,
+        orderBy: { kandidatId: 'asc' },
+      }),
+    ]);
+
+    const nullPexCount = await prisma.notenuebersicht.count({ where: { pexUserId: null } });
+
+    res.json({
+      session: {
+        userId,
+        activePkorgRoleType:      req.session.activePkorgRoleType      ?? null,
+        activePkorgFachrichtung:  fachrichtung,
+        activePkorgRole:          req.session.activePkorgRole           ?? null,
+      },
+      counts: {
+        total:              totalCount,
+        assignedToThisUser: pexCount,
+        inFachrichtung:     fachrichtungCount,
+        withAnyPexUserId:   totalCount - nullPexCount,
+        withNullPexUserId:  nullPexCount,
+      },
+      sampleAssigned,
+      flags: {
+        expSeesFachrichtung: env.EXP_SEES_FACHRICHTUNG ?? false,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});

@@ -219,6 +219,25 @@ export const adminApi = {
   lastPing: () =>
     request<{ lastPing: string }>('/admin/last-ping'),
 
+  debugSession: () =>
+    request<{
+      session: {
+        userId: number;
+        activePkorgRoleType: string | null;
+        activePkorgFachrichtung: string | null;
+        activePkorgRole: { text: string; url: string } | null;
+      };
+      counts: {
+        total: number;
+        assignedToThisUser: number;
+        inFachrichtung: number | null;
+        withAnyPexUserId: number;
+        withNullPexUserId: number;
+      };
+      sampleAssigned: Array<{ kandidatId: number; fachrichtung: string | null; pexUserId: number | null; pexUser: { email: string } | null }>;
+      flags: { expSeesFachrichtung: boolean };
+    }>('/admin/debug/session'),
+
   getKonferenzStatus: () =>
     request<{ status: 'vorbereitung' | 'durchfuehrung' }>('/admin/konferenz-status'),
 

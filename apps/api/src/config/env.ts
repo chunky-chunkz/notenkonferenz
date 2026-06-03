@@ -26,6 +26,16 @@ const envSchema = z.object({
   R2_SECRET_ACCESS_KEY: z.string().optional(),
   // Optional: base URL of a public R2 bucket or custom domain for direct downloads.
   R2_PUBLIC_URL: z.string().optional(),
+
+  // ── EXP visibility fallback ────────────────────────────────────────────────
+  // When set to "true", EXP users see all Notenuebersichten in their fachrichtung
+  // instead of only the ones where pexUserId = their userId.
+  //
+  // Use this ONLY when the PKOrg Excel does not contain HEX/PEX email addresses
+  // and the pexUserId import matching therefore cannot work.  Once the import
+  // reliably populates pexUserId, remove this flag and let the normal EXP filter
+  // take over.
+  EXP_SEES_FACHRICHTUNG: z.string().optional().transform(v => v === 'true'),
 }).superRefine((data, ctx) => {
   if (data.R2_BUCKET) {
     for (const key of ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY'] as const) {

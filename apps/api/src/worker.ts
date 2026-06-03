@@ -173,13 +173,19 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
   addLog(job, '⏳ Starting Notenübersicht import...');
   await job.updateProgress(5);
 
-  // Switch role if needed — returns updated cookies with the new session
+  addLog(job, `📋 Role: ${data.roleUrl ?? '(none)'} | Fachrichtung: ${data.fachrichtung ?? '(none)'}`);
+
   let cookies = data.cookies;
   if (data.roleUrl && data.roleUrl !== '#') {
-    addLog(job, `🔗 Switching role: ${data.roleUrl}`);
+    addLog(job, `🔗 Switching PKOrg role to: ${data.roleUrl}`);
     const switchResult = await pkorgSwitchRole(cookies, data.roleUrl);
+    if (!switchResult.switched) {
+      throw new Error(
+        `PKOrg role switch failed; aborting import to prevent wrong mandant data (roleUrl=${data.roleUrl})`,
+      );
+    }
     cookies = switchResult.cookies;
-    addLog(job, '✅ Role switched');
+    addLog(job, '✅ PKOrg role switched');
   }
 
   // Download Excel
@@ -417,11 +423,19 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
   addLog(job, '⏳ Starting Durchführung import...');
   await job.updateProgress(5);
 
+  addLog(job, `📋 Role: ${data.roleUrl ?? '(none)'} | Fachrichtung: ${data.fachrichtung ?? '(none)'}`);
+
   let cookies = data.cookies;
   if (data.roleUrl && data.roleUrl !== '#') {
+    addLog(job, `🔗 Switching PKOrg role to: ${data.roleUrl}`);
     const switchResult = await pkorgSwitchRole(cookies, data.roleUrl);
+    if (!switchResult.switched) {
+      throw new Error(
+        `PKOrg role switch failed; aborting import to prevent wrong mandant data (roleUrl=${data.roleUrl})`,
+      );
+    }
     cookies = switchResult.cookies;
-    addLog(job, '✅ Role switched');
+    addLog(job, '✅ PKOrg role switched');
   }
 
   addLog(job, '⬇️ Downloading Durchführung Excel...');
@@ -582,10 +596,18 @@ async function handleDownloadPortfolios(job: Job, data: JobData) {
   addLog(job, '⏳ Starting portfolio download...');
   await job.updateProgress(0);
 
+  addLog(job, `📋 Role: ${data.roleUrl ?? '(none)'} | Fachrichtung: ${data.fachrichtung ?? '(none)'}`);
+
   if (data.roleUrl && data.roleUrl !== '#') {
+    addLog(job, `🔗 Switching PKOrg role to: ${data.roleUrl}`);
     const switchResult = await pkorgSwitchRole(data.cookies, data.roleUrl);
+    if (!switchResult.switched) {
+      throw new Error(
+        `PKOrg role switch failed; aborting download to prevent wrong mandant data (roleUrl=${data.roleUrl})`,
+      );
+    }
     data.cookies = switchResult.cookies;
-    addLog(job, '✅ Role switched');
+    addLog(job, '✅ PKOrg role switched');
   }
 
   // Get mandant ID

@@ -167,6 +167,90 @@ function matchByName(vorname: string, nachname: string, users: UserRow[]): numbe
   return matches.length === 1 ? matches[0].id : undefined;
 }
 
+// ─── Role-switch + scope-verification helpers ────────────────────────────────
+
+/**
+ * Attempt PKOrg role switch. Returns updated cookies on success, original on
+ * failure. Logs the outcome but does NOT throw — callers verify export scope
+ * to decide whether it is safe to continue.
+ */
+async function attemptRoleSwitch(
+  job: Job,
+  cookies: CookieJar,
+  roleUrl: string,
+): Promise<{ cookies: CookieJar; switched: boolean }> {
+  addLog(job, `🔗 Switching PKOrg role to: ${roleUrl}`);
+  const result = await pkorgSwitchRole(cookies, roleUrl);
+  if (result.switched) {
+    addLog(job, '✅ PKOrg role switched');
+    return { cookies: result.cookies, switched: true };
+  }
+  addLog(job, '⚠️ PKOrg role switch failed; verifying downloaded export scope before saving');
+  return { cookies, switched: false };
+}
+
+/** Column names that carry the fachrichtung/beruf text in PKOrg Excel exports. */
+const FACHRICHTUNG_COLUMNS = ['Fachrichtung', 'Beruf', 'Berufsfeld', 'FachrichtungText', 'BerufText'];
+
+/**
+ * Scan the first 20 rows for fachrichtung/beruf values and check whether
+ * any of them contain the expected keyword (e.g. "Api" in "Inf Api CH neu").
+ *
+ * Returns:
+ *   'match'       – at least one row contains the expected fachrichtung
+ *   'mismatch'    – values found but none contain the expected fachrichtung
+ *   'unverifiable' – no known fachrichtung/beruf column present in the export
+ */
+function checkExportScope(
+  rows: any[],
+  expectedFachrichtung: string,
+): { result: 'match' | 'mismatch' | 'unverifiable'; samples: string[] } {
+  const sample = rows.slice(0, 20);
+  const values: string[] = [];
+
+  for (const col of FACHRICHTUNG_COLUMNS) {
+    if (rows[0]?.[col] === undefined) continue;
+    for (const row of sample) {
+      const v = (row[col] ?? '').toString().trim();
+      if (v && !values.includes(v)) values.push(v);
+    }
+    if (values.length > 0) break;
+  }
+
+  if (values.length === 0) return { result: 'unverifiable', samples: [] };
+
+  const norm = expectedFachrichtung.toLowerCase();
+  const matched = values.some((v) => v.toLowerCase().includes(norm));
+  return { result: matched ? 'match' : 'mismatch', samples: values.slice(0, 5) };
+}
+
+/**
+ * Run scope verification after parsing rows; throw if the data does not match
+ * or if the switch failed AND the scope cannot be confirmed.
+ */
+function assertExportScope(job: Job, rows: any[], data: JobData, switchSucceeded: boolean): void {
+  if (!data.fachrichtung) return; // no constraint to verify
+
+  const { result, samples } = checkExportScope(rows, data.fachrichtung);
+  addLog(job, `🔍 Scope check: expected="${data.fachrichtung}", samples=${JSON.stringify(samples)}, result=${result}`);
+
+  if (result === 'mismatch') {
+    throw new Error(
+      `Downloaded PKOrg export does not match expected fachrichtung "${data.fachrichtung}"; ` +
+      `aborting to prevent wrong mandant data. Detected: ${samples.join(', ')}`,
+    );
+  }
+  if (result === 'unverifiable' && !switchSucceeded) {
+    throw new Error(
+      `PKOrg role switch failed and export scope cannot be verified (no fachrichtung column found); ` +
+      `aborting to prevent wrong mandant data`,
+    );
+  }
+  if (result === 'match' && !switchSucceeded) {
+    addLog(job, '✅ PKOrg switch failed, but export scope matches expected fachrichtung; continuing safely');
+  }
+}
+
 // ─── Notenübersicht import ────────────────────────────────────────────────────
 
 async function handleImportNotenuebersicht(job: Job, data: JobData) {
@@ -176,16 +260,11 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
   addLog(job, `📋 Role: ${data.roleUrl ?? '(none)'} | Fachrichtung: ${data.fachrichtung ?? '(none)'}`);
 
   let cookies = data.cookies;
+  let switchSucceeded = true;
   if (data.roleUrl && data.roleUrl !== '#') {
-    addLog(job, `🔗 Switching PKOrg role to: ${data.roleUrl}`);
-    const switchResult = await pkorgSwitchRole(cookies, data.roleUrl);
-    if (!switchResult.switched) {
-      throw new Error(
-        `PKOrg role switch failed; aborting import to prevent wrong mandant data (roleUrl=${data.roleUrl})`,
-      );
-    }
-    cookies = switchResult.cookies;
-    addLog(job, '✅ PKOrg role switched');
+    const sr = await attemptRoleSwitch(job, cookies, data.roleUrl);
+    cookies = sr.cookies;
+    switchSucceeded = sr.switched;
   }
 
   // Download Excel
@@ -207,6 +286,9 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
     await job.updateProgress(100);
     return;
   }
+
+  // Verify the export matches the expected fachrichtung before writing any data
+  assertExportScope(job, rows, data, switchSucceeded);
 
   // ── Column diagnostics ────────────────────────────────────────────────────
   const allColumns = Object.keys(rows[0]);
@@ -437,16 +519,11 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
   addLog(job, `📋 Role: ${data.roleUrl ?? '(none)'} | Fachrichtung: ${data.fachrichtung ?? '(none)'}`);
 
   let cookies = data.cookies;
+  let switchSucceeded = true;
   if (data.roleUrl && data.roleUrl !== '#') {
-    addLog(job, `🔗 Switching PKOrg role to: ${data.roleUrl}`);
-    const switchResult = await pkorgSwitchRole(cookies, data.roleUrl);
-    if (!switchResult.switched) {
-      throw new Error(
-        `PKOrg role switch failed; aborting import to prevent wrong mandant data (roleUrl=${data.roleUrl})`,
-      );
-    }
-    cookies = switchResult.cookies;
-    addLog(job, '✅ PKOrg role switched');
+    const sr = await attemptRoleSwitch(job, cookies, data.roleUrl);
+    cookies = sr.cookies;
+    switchSucceeded = sr.switched;
   }
 
   addLog(job, '⬇️ Downloading Durchführung Excel...');
@@ -464,6 +541,9 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
     await job.updateProgress(100);
     return;
   }
+
+  // Verify the export matches the expected fachrichtung before writing any data
+  assertExportScope(job, rows, data, switchSucceeded);
 
   // ── Column diagnostics ────────────────────────────────────────────────────
   const dfColumns = Object.keys(rows[0]);
@@ -621,15 +701,14 @@ async function handleDownloadPortfolios(job: Job, data: JobData) {
   addLog(job, `📋 Role: ${data.roleUrl ?? '(none)'} | Fachrichtung: ${data.fachrichtung ?? '(none)'}`);
 
   if (data.roleUrl && data.roleUrl !== '#') {
-    addLog(job, `🔗 Switching PKOrg role to: ${data.roleUrl}`);
-    const switchResult = await pkorgSwitchRole(data.cookies, data.roleUrl);
-    if (!switchResult.switched) {
-      throw new Error(
-        `PKOrg role switch failed; aborting download to prevent wrong mandant data (roleUrl=${data.roleUrl})`,
-      );
+    const sr = await attemptRoleSwitch(job, data.cookies, data.roleUrl);
+    data.cookies = sr.cookies;
+    if (!sr.switched) {
+      // Portfolios have no Excel to verify scope against — log and continue.
+      // Portfolios are fetched by kandidat ID from our DB, so the risk of
+      // pulling wrong-mandant files is low, but note it clearly.
+      addLog(job, '⚠️ PKOrg role switch failed; portfolio download proceeds with current session scope');
     }
-    data.cookies = switchResult.cookies;
-    addLog(job, '✅ PKOrg role switched');
   }
 
   // Get mandant ID

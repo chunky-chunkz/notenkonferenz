@@ -368,7 +368,7 @@ adminRouter.post('/imports/notenuebersicht', async (req: Request, res: Response,
       roleUrl,
       userId: req.session.userId,
       fachrichtung: req.session.activePkorgFachrichtung ?? undefined,
-    });
+    }, { attempts: 1 });
 
     res.json({ jobId: job.id, status: 'queued', usingRole: req.session.activePkorgRole?.text ?? null });
   } catch (err) {
@@ -396,7 +396,7 @@ adminRouter.post('/imports/durchfuehrung', async (req: Request, res: Response, n
       roleUrl,
       userId: req.session.userId,
       fachrichtung: req.session.activePkorgFachrichtung ?? undefined,
-    });
+    }, { attempts: 1 });
 
     res.json({ jobId: job.id, status: 'queued', usingRole: req.session.activePkorgRole?.text ?? null });
   } catch (err) {
@@ -424,7 +424,7 @@ adminRouter.post('/portfolios/download', async (req: Request, res: Response, nex
       roleUrl,
       userId: req.session.userId,
       fachrichtung: req.session.activePkorgFachrichtung ?? undefined,
-    });
+    }, { attempts: 1 });
 
     res.json({ jobId: job.id, status: 'queued', usingRole: req.session.activePkorgRole?.text ?? null });
   } catch (err) {

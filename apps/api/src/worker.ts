@@ -99,9 +99,26 @@ process.on('uncaughtException', (err) => {
 
 type UserRow = { id: number; email: string };
 
-/** Candidate column names for the HEX/PEX email field in PKOrg Excels. */
+/**
+ * Candidate column names for the responsible-expert email field in PKOrg Excels.
+ *
+ * Order matters: detectEmailColumn() returns the first match, so PEX1 variants
+ * (the confirmed Durchführung column names as of 2026) come first, followed by
+ * generic PEX, then HEX1/HEX fallbacks.
+ *
+ * NpersidPEX1 / NpersidHEX are PKOrg person IDs, not emails — they are listed
+ * here as a reminder but are NOT used for email matching.  If users ever store
+ * their pkorg person ID (e.g. in a future pkorgPersonId field), matching against
+ * NpersidPEX1 can be wired up then.
+ */
 const HEX_EMAIL_CANDIDATES = [
-  'MailHEX', 'E-Mail HEX', 'E-MailHEX', 'MailPEX', 'E-Mail PEX', 'Mail HEX',
+  // Durchführung export (confirmed 2026)
+  'E-Mail PEX1', 'MailPEX1',
+  // Notenübersicht / alternative DF export naming
+  'E-Mail HEX1', 'MailHEX1',
+  // Generic variants (older or alternate PKOrg exports)
+  'E-Mail PEX', 'MailPEX', 'E-MailPEX',
+  'E-Mail HEX', 'MailHEX', 'E-MailHEX', 'Mail HEX',
 ];
 
 /**
@@ -471,8 +488,9 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
 
       // Supplement pexUserId from this sheet — mirrors NU logic with email + name fallback.
       const hexEmail    = extractHexEmail(row, dfEmailCol).toLowerCase();
-      const hexVorname  = (row['VornameHEX'] ?? row['Vorname HEX'] ?? '').toString().trim();
-      const hexNachname = (row['NachnameHEX'] ?? row['Nachname HEX'] ?? '').toString().trim();
+      // PEX1 columns confirmed present in DF export; fall back to HEX naming for NU exports
+      const hexVorname  = (row['Vorname PEX1'] ?? row['VornamePEX1'] ?? row['VornameHEX'] ?? row['Vorname HEX'] ?? '').toString().trim();
+      const hexNachname = (row['Nachname PEX1'] ?? row['NachnamePEX1'] ?? row['NachnameHEX'] ?? row['Nachname HEX'] ?? '').toString().trim();
 
       let dfPexUserId: number | undefined;
       if (hexEmail) {

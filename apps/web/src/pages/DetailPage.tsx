@@ -14,6 +14,7 @@ export function DetailPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['item', id],
     queryFn: () => itemsApi.get(id),
+    refetchInterval: 30_000,
   });
 
   const dropMutation = useMutation({

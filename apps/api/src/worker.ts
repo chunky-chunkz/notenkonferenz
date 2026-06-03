@@ -127,6 +127,20 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
     addLog(job, `🔍 Row0: ${JSON.stringify(rows[0])}`);
   }
 
+  // Build email → userId map for pexUserId matching
+  const allUsers = await prisma.user.findMany({ select: { id: true, email: true } });
+  const usersByEmail = new Map<string, number>();
+  for (const u of allUsers) usersByEmail.set(u.email.toLowerCase(), u.id);
+  addLog(job, `👥 Loaded ${allUsers.length} users for pexUserId matching`);
+
+  // Helper: extract HEX/PEX email from a row trying all known PKOrg column name variants
+  function resolveHexEmail(row: any): string {
+    return (
+      row['MailHEX'] ?? row['E-Mail HEX'] ?? row['E-MailHEX'] ??
+      row['MailPEX'] ?? row['E-Mail PEX'] ?? row['Mail HEX'] ?? ''
+    ).toString().trim();
+  }
+
   // Collect entities
   const existingKandidaten = new Set((await prisma.kandidat.findMany({ select: { id: true } })).map((k) => k.id));
   const existingHex = new Set((await prisma.hauptexperte.findMany({ select: { id: true } })).map((h) => h.id));
@@ -148,7 +162,8 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
 
     const hexId = parseInt(row['IdHEX']);
     if (hexId && !existingHex.has(hexId)) {
-      newHex.push({ id: hexId, vorname: row['VornameHEX'] ?? '', nachname: row['NachnameHEX'] ?? '' });
+      const hexMail = resolveHexEmail(row) || undefined;
+      newHex.push({ id: hexId, vorname: row['VornameHEX'] ?? '', nachname: row['NachnameHEX'] ?? '', mail: hexMail });
       existingHex.add(hexId);
     }
 
@@ -182,11 +197,37 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
   addLog(job, '📝 Upserting Notenuebersichten...');
   let created = 0;
   let updated = 0;
+  let pexMatched = 0;
+  let pexUnmatched = 0;
+  let pexNoEmail = 0;
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const kandidatId = parseInt(row['Kandidat:in ID']);
     if (!kandidatId) continue;
+
+    // Resolve pexUserId from HEX/PEX email column:
+    //   - email found + user matched  → set userId
+    //   - email found + no user match → set null, log warning
+    //   - no email column             → leave undefined (excluded from update, preserves existing)
+    const hexEmail = resolveHexEmail(row).toLowerCase();
+    let resolvedPexUserId: number | null | undefined;
+    if (hexEmail) {
+      const matchedId = usersByEmail.get(hexEmail);
+      if (matchedId !== undefined) {
+        resolvedPexUserId = matchedId;
+        pexMatched++;
+      } else {
+        resolvedPexUserId = null;
+        pexUnmatched++;
+        if (pexUnmatched <= 10) {
+          addLog(job, `⚠️ No user for HEX email "${hexEmail}" (kandidat ${kandidatId})`);
+        }
+      }
+    } else {
+      resolvedPexUserId = undefined;
+      pexNoEmail++;
+    }
 
     const noteData = {
       fachrichtung:         row['Fachrichtung']         ?? undefined,  // don't overwrite with null
@@ -208,6 +249,7 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
       noteTeil2Errechnet:   parseFloat(row['NoteTeil2Errechnet'])  || undefined,
       noteTeil3Errechnet:   parseFloat(row['NoteTeil3Errechnet'])  || undefined,
       notePaErrechnet:      parseFloat(row['NotePAErrechnet'])     || undefined,
+      pexUserId:            resolvedPexUserId,
     };
 
     // Strip undefined keys so Prisma ignores missing columns on updates
@@ -230,6 +272,7 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
   }
 
   addLog(job, `✅ Notenuebersichten: ${created} created, ${updated} updated`);
+  addLog(job, `👤 pexUserId: ${pexMatched} matched, ${pexUnmatched} unmatched (no user found), ${pexNoEmail} rows had no email column`);
   await logAction(data.userId, 'Notenübersicht imported via job');
   await job.updateProgress(100);
   addLog(job, '✅ Import complete');
@@ -261,8 +304,24 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
     addLog(job, `🔍 DF-Row0: ${JSON.stringify(rows[0])}`);
   }
 
+  // Build email → userId map for pexUserId matching
+  const allUsers = await prisma.user.findMany({ select: { id: true, email: true } });
+  const usersByEmail = new Map<string, number>();
+  for (const u of allUsers) usersByEmail.set(u.email.toLowerCase(), u.id);
+
+  // Helper: extract HEX/PEX email from a row trying all known PKOrg column name variants
+  function resolveHexEmail(row: any): string {
+    return (
+      row['MailHEX'] ?? row['E-Mail HEX'] ?? row['E-MailHEX'] ??
+      row['MailPEX'] ?? row['E-Mail PEX'] ?? row['Mail HEX'] ?? ''
+    ).toString().trim();
+  }
+
   let updatedK = 0;
   let updatedV = 0;
+  let dfPexMatched = 0;
+  let dfPexUnmatched = 0;
+  let dfPexNoEmail = 0;
 
   for (const row of rows) {
     // Durchführungsübersicht (nauswertungid=839) uses different column names than Notenübersicht
@@ -283,6 +342,30 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
         });
         updatedK++;
       } catch { /* Kandidat may not exist yet */ }
+
+      // Attempt to set pexUserId from HEX/PEX email in this sheet.
+      // This supplements the Notenübersicht import: if that sheet lacked an email column,
+      // the Durchführung sheet may still carry it.
+      const hexEmail = resolveHexEmail(row).toLowerCase();
+      if (hexEmail) {
+        const matchedId = usersByEmail.get(hexEmail);
+        if (matchedId !== undefined) {
+          try {
+            await prisma.notenuebersicht.updateMany({
+              where: { kandidatId: kId },
+              data: { pexUserId: matchedId },
+            });
+            dfPexMatched++;
+          } catch { /* Notenuebersicht may not exist yet */ }
+        } else {
+          dfPexUnmatched++;
+          if (dfPexUnmatched <= 10) {
+            addLog(job, `⚠️ DF: No user for HEX email "${hexEmail}" (kandidat ${kId})`);
+          }
+        }
+      } else {
+        dfPexNoEmail++;
+      }
     }
 
     const vfId = parseInt(row['NpersidVF']);
@@ -320,6 +403,7 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
   }
 
   addLog(job, `✅ Updated: ${updatedK} Kandidaten, ${updatedV} VFs`);
+  addLog(job, `👤 DF pexUserId: ${dfPexMatched} matched, ${dfPexUnmatched} unmatched (no user found), ${dfPexNoEmail} rows had no email column`);
   await logAction(data.userId, 'Durchführung imported via job');
   await job.updateProgress(100);
 }

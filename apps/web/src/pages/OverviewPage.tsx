@@ -11,6 +11,7 @@ export function OverviewPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['items-overview', filters],
     queryFn: () => itemsApi.list(filters),
+    refetchInterval: 30_000,
   });
 
   const updateFilter = (key: string, value: string) => {

@@ -34,17 +34,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Session store: Redis when REDIS_URL is set, MemoryStore otherwise.
-// WARNING: MemoryStore is for single-instance demo use only — sessions are lost
-// on restart and not shared across multiple instances. Set REDIS_URL in production.
+// Session store: Redis in production (required), MemoryStore in development only.
 let sessionStore: session.Store;
 if (sessionRedis) {
   sessionStore = new RedisStore({ client: sessionRedis });
+} else if (env.NODE_ENV === 'production') {
+  throw new Error(
+    '[Session] REDIS_URL must be set in production. ' +
+    'MemoryStore is not safe for production use: sessions are lost on restart ' +
+    'and cannot be shared across instances.',
+  );
 } else {
   console.warn(
     '\n⚠️  [Session] REDIS_URL is not set — using in-memory session store.\n' +
-    '   Sessions will be lost on restart and are not shared across instances.\n' +
-    '   Suitable for single-instance demo only. Set REDIS_URL for production.\n',
+    '   Sessions will be lost on restart. Development only.\n',
   );
   sessionStore = new session.MemoryStore();
 }

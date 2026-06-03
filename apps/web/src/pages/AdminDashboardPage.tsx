@@ -24,6 +24,7 @@ export function AdminDashboardPage() {
     },
     retry: false,
     enabled: hasPkorgSession,
+    refetchInterval: false, // one-time fetch — do not poll
   });
 
   // Last ping
@@ -81,6 +82,7 @@ export function AdminDashboardPage() {
   const { data: konferenzData, refetch: refetchKonferenz } = useQuery({
     queryKey: ['konferenz-status'],
     queryFn: () => adminApi.getKonferenzStatus(),
+    refetchInterval: 30_000,
   });
   const konferenzStatus = konferenzData?.status ?? 'vorbereitung';
 

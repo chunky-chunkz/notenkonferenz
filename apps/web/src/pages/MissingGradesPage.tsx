@@ -11,6 +11,7 @@ export function MissingGradesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['missing-grades', filters],
     queryFn: () => itemsApi.missingGrades(filters),
+    refetchInterval: 30_000,
   });
 
   const gradeMutation = useMutation({

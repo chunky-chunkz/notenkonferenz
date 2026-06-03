@@ -18,6 +18,7 @@ export function IndexPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['my-items'],
     queryFn: () => itemsApi.my(),
+    refetchInterval: 30_000,
   });
 
   const collectMutation = useMutation({

@@ -14,6 +14,26 @@ const envSchema = z.object({
   PKORG_BASE_URL: z.string().default('https://2026.pkorg.ch'),
   UPLOAD_DIR: z.string().default('./uploads'),
   MEDIA_DIR: z.string().default('./media'),
+
+  // ── Cloudflare R2 (S3-compatible) ──────────────────────────────────────────
+  // When R2_BUCKET is set all four credential vars are required.
+  // Leave unset to use local disk storage (development / single-instance demos).
+  // NOTE: Render Free local disk is ephemeral — files are lost on every deploy
+  //       or restart. Set R2_* vars for any persistent file storage.
+  R2_BUCKET: z.string().optional(),
+  R2_ACCOUNT_ID: z.string().optional(),
+  R2_ACCESS_KEY_ID: z.string().optional(),
+  R2_SECRET_ACCESS_KEY: z.string().optional(),
+  // Optional: base URL of a public R2 bucket or custom domain for direct downloads.
+  R2_PUBLIC_URL: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.R2_BUCKET) {
+    for (const key of ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY'] as const) {
+      if (!data[key]) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: `${key} is required when R2_BUCKET is set` });
+      }
+    }
+  }
 });
 
 const parsed = envSchema.safeParse(process.env);

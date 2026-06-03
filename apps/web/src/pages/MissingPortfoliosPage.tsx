@@ -9,6 +9,7 @@ export function MissingPortfoliosPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['missing-portfolios'],
     queryFn: () => filesApi.missingPortfolios(),
+    refetchInterval: 60_000,
   });
 
   const [file, setFile] = useState<File | null>(null);

@@ -5,6 +5,7 @@ export function DashboardPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: () => itemsApi.dashboardStats(),
+    refetchInterval: 30_000,
   });
 
   if (isLoading) return <div className="text-center py-12">Lade Dashboard...</div>;

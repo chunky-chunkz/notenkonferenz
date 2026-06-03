@@ -12,6 +12,11 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 30_000,
       retry: 1,
+      // Refetch on window focus so users see fresh data when they tab back in.
+      refetchOnWindowFocus: true,
+      // Stop all interval-based polling while the window is not focused.
+      // Per-query refetchInterval values handle the actual polling cadence.
+      refetchIntervalInBackground: false,
     },
   },
 });

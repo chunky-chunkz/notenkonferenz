@@ -85,25 +85,44 @@ async function clearDataForScope(fachrichtung: string | null | undefined): Promi
   }
 }
 
-// ─── Konferenz-Status (in-memory, resets on restart) ─────────────────────────
-let konferenzStatus: 'vorbereitung' | 'durchfuehrung' = 'vorbereitung';
+// ─── Konferenz-Status (persisted in DB via Setting model) ────────────────────
+const KONFERENZ_KEY = 'konferenzStatus';
+type KonferenzStatus = 'vorbereitung' | 'durchfuehrung';
 
-adminRouter.get('/konferenz-status', (_req: Request, res: Response) => {
-  res.json({ status: konferenzStatus });
+async function getKonferenzStatus(): Promise<KonferenzStatus> {
+  const row = await prisma.setting.findUnique({ where: { key: KONFERENZ_KEY } });
+  const val = row?.value;
+  return val === 'durchfuehrung' ? 'durchfuehrung' : 'vorbereitung';
+}
+
+adminRouter.get('/konferenz-status', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.json({ status: await getKonferenzStatus() });
+  } catch (err) {
+    next(err);
+  }
 });
 
-adminRouter.post('/konferenz-status', (req: Request, res: Response) => {
-  const { status } = req.body;
-  if (status !== 'vorbereitung' && status !== 'durchfuehrung') {
-    res.status(400).json({ error: 'invalid_status', message: 'Status must be vorbereitung or durchfuehrung' });
-    return;
+adminRouter.post('/konferenz-status', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { status } = req.body;
+    if (status !== 'vorbereitung' && status !== 'durchfuehrung') {
+      res.status(400).json({ error: 'invalid_status', message: 'Status must be vorbereitung or durchfuehrung' });
+      return;
+    }
+    await prisma.setting.upsert({
+      where:  { key: KONFERENZ_KEY },
+      create: { key: KONFERENZ_KEY, value: status },
+      update: { value: status },
+    });
+    res.json({ status });
+  } catch (err) {
+    next(err);
   }
-  konferenzStatus = status;
-  res.json({ status: konferenzStatus });
 });
 
 // Export for use in other routes
-export { konferenzStatus };
+export { getKonferenzStatus };
 
 // ─── GET /api/admin/users ────────────────────────────────────────────────────
 adminRouter.get('/users', async (_req: Request, res: Response, next: NextFunction) => {
@@ -313,23 +332,11 @@ adminRouter.post('/pkorg/switch-role', async (req: Request, res: Response, next:
       req.session.pkorgCookies = updatedCookies;
     }
 
-    // ── Auto-clear database on role switch (scoped to this fachrichtung only) ─
-    // Drain the import queue first so no pending jobs write stale data after the clear.
-    if (importQueue) {
-      await Promise.all([
-        importQueue.clean(0, 1000, 'wait'),
-        importQueue.clean(0, 1000, 'delayed'),
-      ]);
-    }
-
-    await clearDataForScope(req.session.activePkorgFachrichtung);
-
-    await logAction(req.session.userId!, `Switched PKOrg role to: ${matched.text} (pkorg=${switched}) – database cleared`);
+    await logAction(req.session.userId!, `Switched PKOrg role to: ${matched.text} (pkorg=${switched})`);
 
     res.json({
       activePkorgRole: matched,
       availableRoles: req.session.pkorgRoles ?? [],
-      databaseCleared: true,
     });
   } catch (err) {
     next(err);

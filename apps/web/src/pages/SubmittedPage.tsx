@@ -14,6 +14,7 @@ export function SubmittedPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['submitted-items'],
     queryFn: () => itemsApi.submitted(),
+    refetchInterval: 30_000,
   });
 
   const visierenMutation = useMutation({

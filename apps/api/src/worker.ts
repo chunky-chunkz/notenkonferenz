@@ -414,6 +414,17 @@ async function handleImportNotenuebersicht(job: Job, data: JobData) {
       'Check column names above and verify user emails match the HEX email values in PKOrg. ' +
       'Set EXP_SEES_FACHRICHTUNG=true to unblock EXP users while debugging.');
   }
+
+  await prisma.importRun.create({
+    data: {
+      importType: 'notenuebersicht',
+      fachrichtung: data.fachrichtung ?? null,
+      roleUrl: data.roleUrl ?? null,
+      rowCount: created + updated,
+      importedByUserId: data.userId ?? null,
+    },
+  });
+
   await logAction(data.userId, 'Notenübersicht imported via job');
   await job.updateProgress(100);
   addLog(job, '✅ Import complete');
@@ -588,6 +599,17 @@ async function handleImportDurchfuehrung(job: Job, data: JobData) {
 
   addLog(job, `✅ Updated: ${updatedK} Kandidaten, ${updatedV} VFs`);
   addLog(job, `👤 DF pexUserId: ${dfPexByEmail} by email, ${dfPexByName} by name heuristic, ${dfPexUnmatched} unmatched, ${dfPexNoIdentifier} had no identifier`);
+
+  await prisma.importRun.create({
+    data: {
+      importType: 'durchfuehrung',
+      fachrichtung: data.fachrichtung ?? null,
+      roleUrl: data.roleUrl ?? null,
+      rowCount: updatedK,
+      importedByUserId: data.userId ?? null,
+    },
+  });
+
   await logAction(data.userId, 'Durchführung imported via job');
   await job.updateProgress(100);
 }
@@ -645,6 +667,16 @@ async function handleDownloadPortfolios(job: Job, data: JobData) {
 
     await job.updateProgress(Math.round(((i + 1) / total) * 100));
   }
+
+  await prisma.importRun.create({
+    data: {
+      importType: 'portfolios',
+      fachrichtung: data.fachrichtung ?? null,
+      roleUrl: data.roleUrl ?? null,
+      rowCount: total,
+      importedByUserId: data.userId ?? null,
+    },
+  });
 
   await logAction(data.userId, 'Portfolio download completed via job');
   addLog(job, '✅ All downloads complete');

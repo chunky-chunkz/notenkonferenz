@@ -490,6 +490,53 @@ adminRouter.get('/last-ping', (req: Request, res: Response) => {
   res.json({ lastPing: req.session.lastPkorgPing ?? '2000-01-01T00:00:00' });
 });
 
+// ─── GET /api/admin/import-status ────────────────────────────────────────────
+// Returns last successful import per fachrichtung and type so any user can see
+// whether the shared Notenuebersicht table is up to date without running their
+// own import.
+adminRouter.get('/import-status', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Latest run per (fachrichtung, importType) — order desc so we just take the first
+    const runs = await prisma.importRun.findMany({
+      orderBy: { importedAt: 'desc' },
+      include: { importedByUser: { select: { email: true } } },
+    });
+
+    // Keep only the most recent run per fachrichtung+type
+    const seen = new Set<string>();
+    const latest: typeof runs = [];
+    for (const run of runs) {
+      const key = `${run.fachrichtung ?? ''}::${run.importType}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        latest.push(run);
+      }
+    }
+
+    // Current live row counts per fachrichtung
+    const counts = await prisma.notenuebersicht.groupBy({
+      by: ['fachrichtung'],
+      _count: { id: true },
+    });
+
+    res.json({
+      lastRuns: latest.map((r) => ({
+        importType:      r.importType,
+        fachrichtung:    r.fachrichtung,
+        importedAt:      r.importedAt,
+        importedBy:      r.importedByUser?.email ?? null,
+        rowCount:        r.rowCount,
+      })),
+      currentCounts: counts.map((c) => ({
+        fachrichtung: c.fachrichtung,
+        count:        c._count.id,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ─── GET /api/admin/debug/session ────────────────────────────────────────────
 // Diagnostic endpoint: shows session identity + pexUserId coverage for the
 // currently logged-in admin. Use to verify matching worked after an import.

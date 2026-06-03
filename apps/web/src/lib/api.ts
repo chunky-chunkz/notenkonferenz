@@ -219,6 +219,18 @@ export const adminApi = {
   lastPing: () =>
     request<{ lastPing: string }>('/admin/last-ping'),
 
+  importStatus: () =>
+    request<{
+      lastRuns: Array<{
+        importType: string;
+        fachrichtung: string | null;
+        importedAt: string;
+        importedBy: string | null;
+        rowCount: number;
+      }>;
+      currentCounts: Array<{ fachrichtung: string | null; count: number }>;
+    }>('/admin/import-status'),
+
   debugSession: () =>
     request<{
       session: {

@@ -36,6 +36,7 @@ model User {
   // Relations
   notenuebersichten Notenuebersicht[] @relation("PexUser")
   logs              Log[]
+  importRuns        ImportRun[]
 
   @@map("users")
 }
@@ -196,4 +197,20 @@ model Setting {
   updatedAt DateTime @updatedAt
 
   @@map("settings")
+}
+
+// Tracks each completed PKOrg import so all users can see when/by whom data was
+// last refreshed for a given fachrichtung without having to import themselves.
+model ImportRun {
+  id               Int      @id @default(autoincrement())
+  // 'notenuebersicht' | 'durchfuehrung' | 'portfolios'
+  importType       String   @db.VarChar(50)
+  fachrichtung     String?  @db.VarChar(100)
+  roleUrl          String?  @db.VarChar(500)
+  rowCount         Int      @default(0)
+  importedAt       DateTime @default(now())
+  importedByUserId Int?
+  importedByUser   User?    @relation(fields: [importedByUserId], references: [id], onDelete: SetNull)
+
+  @@map("import_runs")
 }

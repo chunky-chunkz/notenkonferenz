@@ -290,16 +290,18 @@ itemsRouter.post('/collect-random', async (req: Request, res: Response, next: Ne
       ? { notePaErrechnet: { gte: noteMin, lte: noteMax } }
       : {};
 
-    // Find unassigned, not-yet-visiert items within the user's scope.
+    const portfolioFilter = { kandidat: { portfolio: { status: 'downloaded' } } };
+
+    // Find unassigned, not-yet-visiert items within the user's scope whose portfolio is ready.
     let candidates = await prisma.notenuebersicht.findMany({
-      where: { pexUserId: null, nkVisiert: false, ...noteFilter, ...scopeFilter },
+      where: { pexUserId: null, nkVisiert: false, ...portfolioFilter, ...noteFilter, ...scopeFilter },
       take: 20,
     });
 
-    // If the note-range filter matched nothing, fall back to any unassigned item in scope.
+    // If the note-range filter matched nothing, fall back to any unassigned item in scope (portfolio still required).
     if (candidates.length === 0 && Object.keys(noteFilter).length > 0) {
       candidates = await prisma.notenuebersicht.findMany({
-        where: { pexUserId: null, nkVisiert: false, ...scopeFilter },
+        where: { pexUserId: null, nkVisiert: false, ...portfolioFilter, ...scopeFilter },
         take: 20,
       });
     }
@@ -454,12 +456,12 @@ itemsRouter.post('/collect', async (req: Request, res: Response, next: NextFunct
     };
     const range = ranges[typ];
 
-    // Find random unassigned item in range
-    // Using raw query for random selection to avoid full table scan
+    // Find random unassigned item in range — only where portfolio is already downloaded
     const candidates = await prisma.notenuebersicht.findMany({
       where: {
         pexUserId: null,
         notePaErrechnet: { gte: range.gte, lte: range.lte },
+        kandidat: { portfolio: { status: 'downloaded' } },
         ...fachrichtungFilter,
       },
       take: 10,

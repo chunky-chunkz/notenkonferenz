@@ -102,6 +102,19 @@ jobsRouter.delete('/:jobId', async (req: Request, res: Response, next: NextFunct
       throw new AppError(404, 'not_found', 'Job not found');
     }
 
+    const state = await job.getState();
+    if (state === 'active') {
+      // Active jobs are locked by the worker — move to failed first so the
+      // lock is released, then the remove below cleans it from history.
+      try {
+        await job.moveToFailed(new Error('Gelöscht durch Admin'), job.token ?? '0', true);
+      } catch {
+        // If moveToFailed fails (e.g. lock mismatch), force-remove via queue
+        await importQueue!.remove(job.id!);
+        res.json({ status: 'removed' });
+        return;
+      }
+    }
     await job.remove();
     res.json({ status: 'removed' });
   } catch (err) {

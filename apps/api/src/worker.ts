@@ -716,9 +716,13 @@ async function handleDownloadPortfolios(job: Job, data: JobData) {
     : path.join(env.MEDIA_DIR, 'portfolios');
   fs.mkdirSync(portfoliosDir, { recursive: true });
 
-  const kandidaten = await prisma.kandidat.findMany();
+  const kandidaten = await prisma.kandidat.findMany(
+    data.fachrichtung
+      ? { where: { notenuebersicht: { fachrichtung: { contains: data.fachrichtung } } } }
+      : undefined,
+  );
   const total = kandidaten.length;
-  addLog(job, `📦 ${total} Kandidaten to process`);
+  addLog(job, `📦 ${total} Kandidaten to process (fachrichtung: ${data.fachrichtung ?? 'all'})`);
 
   let downloaded = 0;
   let skipped = 0;

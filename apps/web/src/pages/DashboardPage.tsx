@@ -8,13 +8,13 @@ import toast from 'react-hot-toast';
 type Filter = 'alle' | 'visiert' | 'angepasst';
 
 export function DashboardPage() {
-  const { isCex, isAdmin, isStaff } = useAuth();
+  const { isCex, isAdmin, isStaff, isExp } = useAuth();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<Filter>('alle');
 
   const showStats = isCex || isAdmin || isStaff;
   const showWorkingOn = isAdmin || isStaff;
-  const canVisieren = isCex || isAdmin || isStaff;
+  const canVisieren = isExp || isCex || isAdmin || isStaff;
   const canAnpassen = isAdmin || isStaff;
 
   const { data: statsData, isLoading: statsLoading } = useQuery({

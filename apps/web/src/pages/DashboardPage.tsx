@@ -15,6 +15,7 @@ export function DashboardPage() {
   const showStats = isCex || isAdmin || isStaff;
   const showWorkingOn = isAdmin || isStaff;
   const canVisieren = isCex || isAdmin || isStaff;
+  const canAnpassen = isAdmin || isStaff;
 
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -209,7 +210,7 @@ export function DashboardPage() {
                             ✅ Visieren
                           </button>
                         )}
-                        {canVisieren && (
+                        {canAnpassen && (
                           <Link
                             to={`/change/${item.kandidatId}`}
                             className="px-3 py-1 text-xs rounded bg-yellow-500 hover:bg-yellow-600 text-white"

@@ -9,7 +9,7 @@ export function DetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const id = parseInt(kandidatId!, 10);
-  const { isStaff, isCex, isAdmin } = useAuth();
+  const { isStaff, isCex, isAdmin, isExp } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ['item', id],
@@ -36,7 +36,8 @@ export function DetailPage() {
     onError: (err: any) => toast.error(err.message),
   });
 
-  const canVisieren = isCex || isAdmin || isStaff;
+  const canVisieren = !isExp && (isCex || isAdmin || isStaff);
+  const canAnpassen = isAdmin || isStaff;
 
   if (isLoading) return <div className="text-center py-12">Lade...</div>;
   if (!data?.item) return <div className="text-center py-12">Nicht gefunden</div>;
@@ -106,7 +107,7 @@ export function DetailPage() {
                         ✅ Visieren
                       </button>
                     )}
-                    {canVisieren && (
+                    {canAnpassen && (
                       <Link
                         to={`/change/${id}`}
                         className="px-3 py-1 text-sm rounded bg-yellow-500 text-white hover:bg-yellow-600"

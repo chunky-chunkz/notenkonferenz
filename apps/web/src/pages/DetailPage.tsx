@@ -37,7 +37,7 @@ export function DetailPage() {
   });
 
   const canVisieren = isExp || isCex || isAdmin || isStaff;
-  const canAnpassen = isAdmin || isStaff;
+  const canAnpassen = isExp || isAdmin || isStaff;
 
   if (isLoading) return <div className="text-center py-12">Lade...</div>;
   if (!data?.item) return <div className="text-center py-12">Nicht gefunden</div>;

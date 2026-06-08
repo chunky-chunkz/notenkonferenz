@@ -44,10 +44,26 @@ filesRouter.get('/portfolio/:kandidatId', async (req: Request, res: Response, ne
         const nmandantid = await pkorgGetMandantId(cookies);
         const buffer = await pkorgDownloadPortfolioZip(cookies, nmandantid, kandidatId);
 
-        // Save to disk for future use
+        // Save to disk and record in DB
         const portfoliosDir = path.join(env.MEDIA_DIR, 'portfolios');
         fs.mkdirSync(portfoliosDir, { recursive: true });
         fs.writeFileSync(path.join(portfoliosDir, `${kandidatId}.zip`), buffer);
+
+        await prisma.portfolio.upsert({
+          where: { kandidatId },
+          create: {
+            kandidatId,
+            filePath: `portfolios/${kandidatId}.zip`,
+            status: 'downloaded',
+            downloadedAt: new Date(),
+          },
+          update: {
+            filePath: `portfolios/${kandidatId}.zip`,
+            status: 'downloaded',
+            downloadedAt: new Date(),
+            error: null,
+          },
+        });
 
         res.setHeader('Content-Type', 'application/zip');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -58,8 +74,12 @@ filesRouter.get('/portfolio/:kandidatId', async (req: Request, res: Response, ne
       }
     }
 
-    // Fallback: serve from local disk
-    const filePath = path.join(env.MEDIA_DIR, 'portfolios', `${kandidatId}.zip`);
+    // Fallback: serve from DB-recorded path or default disk location
+    const dbPortfolio = await prisma.portfolio.findUnique({ where: { kandidatId } });
+    const filePath = dbPortfolio?.filePath
+      ? path.join(env.MEDIA_DIR, dbPortfolio.filePath)
+      : path.join(env.MEDIA_DIR, 'portfolios', `${kandidatId}.zip`);
+
     if (!fs.existsSync(filePath)) {
       throw new AppError(404, 'file_not_found', 'Portfolio file not found. Please connect to PKOrg or download portfolios first.');
     }
@@ -130,12 +150,12 @@ filesRouter.get('/anpassung/:anpassungId', async (req: Request, res: Response, n
 // ─── GET /api/files/missing-portfolios ───────────────────────────────────────
 filesRouter.get('/missing-portfolios', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const portfoliosDir = path.join(env.MEDIA_DIR, 'portfolios');
-    fs.mkdirSync(portfoliosDir, { recursive: true });
+    const kandidaten = await prisma.kandidat.findMany({
+      include: { portfolio: true },
+    });
 
-    const kandidaten = await prisma.kandidat.findMany();
     const missing = kandidaten.filter(
-      (k) => !fs.existsSync(path.join(portfoliosDir, `${k.id}.zip`)),
+      (k) => k.portfolio?.status !== 'downloaded',
     );
 
     res.json({
@@ -143,6 +163,7 @@ filesRouter.get('/missing-portfolios', async (_req: Request, res: Response, next
         id: k.id,
         vorname: k.vorname,
         nachname: k.nachname,
+        portfolioStatus: k.portfolio?.status ?? 'pending',
       })),
       total: kandidaten.length,
       missingCount: missing.length,
@@ -168,6 +189,30 @@ filesRouter.post(
       for (const file of files ?? []) {
         const dest = path.join(portfoliosDir, file.originalname);
         fs.renameSync(file.path, dest);
+
+        // Update DB record if filename matches pattern {kandidatId}.zip
+        const match = file.originalname.match(/^(\d+)\.zip$/);
+        if (match) {
+          const kandidatId = parseInt(match[1], 10);
+          const kandidat = await prisma.kandidat.findUnique({ where: { id: kandidatId } });
+          if (kandidat) {
+            await prisma.portfolio.upsert({
+              where: { kandidatId },
+              create: {
+                kandidatId,
+                filePath: `portfolios/${file.originalname}`,
+                status: 'downloaded',
+                downloadedAt: new Date(),
+              },
+              update: {
+                filePath: `portfolios/${file.originalname}`,
+                status: 'downloaded',
+                downloadedAt: new Date(),
+                error: null,
+              },
+            });
+          }
+        }
       }
 
       res.json({ status: 'ok', savedFiles: saved, count: saved.length });

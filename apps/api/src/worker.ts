@@ -704,14 +704,10 @@ async function handleDownloadPortfolios(job: Job, data: JobData) {
     const sr = await attemptRoleSwitch(job, data.cookies, data.roleUrl);
     data.cookies = sr.cookies;
     if (!sr.switched) {
-      // Portfolios have no Excel to verify scope against — log and continue.
-      // Portfolios are fetched by kandidat ID from our DB, so the risk of
-      // pulling wrong-mandant files is low, but note it clearly.
       addLog(job, '⚠️ PKOrg role switch failed; portfolio download proceeds with current session scope');
     }
   }
 
-  // Get mandant ID
   const nmandantid = await pkorgGetMandantId(data.cookies);
   addLog(job, `📋 Mandant ID: ${nmandantid}`);
 
@@ -724,23 +720,51 @@ async function handleDownloadPortfolios(job: Job, data: JobData) {
   const total = kandidaten.length;
   addLog(job, `📦 ${total} Kandidaten to process`);
 
+  let downloaded = 0;
+  let skipped = 0;
+  let failed = 0;
+
   for (let i = 0; i < kandidaten.length; i++) {
     const kandidat = kandidaten[i];
     const filePath = path.join(portfoliosDir, `${kandidat.id}.zip`);
+    const relPath = data.fachrichtung
+      ? `portfolios/${data.fachrichtung}/${kandidat.id}.zip`
+      : `portfolios/${kandidat.id}.zip`;
 
-    if (fs.existsSync(filePath)) {
-      addLog(job, `⏩ ${kandidat.id}: already exists`);
+    const existing = await prisma.portfolio.findUnique({ where: { kandidatId: kandidat.id } });
+
+    if (existing?.status === 'downloaded' && fs.existsSync(filePath)) {
+      addLog(job, `⏩ ${kandidat.id}: already downloaded`);
+      skipped++;
     } else {
+      await prisma.portfolio.upsert({
+        where: { kandidatId: kandidat.id },
+        create: { kandidatId: kandidat.id, status: 'downloading' },
+        update: { status: 'downloading', error: null },
+      });
+
       try {
         addLog(job, `⬇️ ${kandidat.id}: downloading...`);
         const buffer = await pkorgDownloadPortfolioZip(data.cookies, nmandantid, kandidat.id);
         fs.writeFileSync(filePath, buffer);
+
+        await prisma.portfolio.update({
+          where: { kandidatId: kandidat.id },
+          data: { status: 'downloaded', filePath: relPath, downloadedAt: new Date(), error: null },
+        });
+
         addLog(job, `✅ ${kandidat.id}: saved`);
+        downloaded++;
       } catch (err) {
-        addLog(job, `⚠️ ${kandidat.id}: ${(err as Error).message}`);
+        const msg = (err as Error).message;
+        await prisma.portfolio.update({
+          where: { kandidatId: kandidat.id },
+          data: { status: 'failed', error: msg },
+        });
+        addLog(job, `⚠️ ${kandidat.id}: ${msg}`);
+        failed++;
       }
 
-      // Rate limiting - wait 2s between downloads
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
 
@@ -752,13 +776,13 @@ async function handleDownloadPortfolios(job: Job, data: JobData) {
       importType: 'portfolios',
       fachrichtung: data.fachrichtung ?? null,
       roleUrl: data.roleUrl ?? null,
-      rowCount: total,
+      rowCount: downloaded,
       importedByUserId: data.userId ?? null,
     },
   });
 
   await logAction(data.userId, 'Portfolio download completed via job');
-  addLog(job, '✅ All downloads complete');
+  addLog(job, `✅ All done: ${downloaded} downloaded, ${skipped} skipped, ${failed} failed`);
 }
 
 logger.info('🔧 Worker started, waiting for jobs...');

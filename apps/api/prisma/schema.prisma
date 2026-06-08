@@ -56,6 +56,7 @@ model Kandidat {
   ort        String? @db.VarChar(50)
 
   notenuebersicht Notenuebersicht?
+  portfolio       Portfolio?
 
   @@map("kandidaten")
 }
@@ -197,6 +198,22 @@ model Setting {
   updatedAt DateTime @updatedAt
 
   @@map("settings")
+}
+
+// Tracks the download status of each portfolio ZIP from PKOrg.
+// Allows pre-fetching portfolios in advance and querying which are ready.
+model Portfolio {
+  id           Int       @id @default(autoincrement())
+  kandidatId   Int       @unique
+  kandidat     Kandidat  @relation(fields: [kandidatId], references: [id], onDelete: Cascade)
+  // Relative path within MEDIA_DIR, e.g. "portfolios/12345.zip"
+  filePath     String?   @db.VarChar(500)
+  // pending | downloading | downloaded | failed
+  status       String    @default("pending") @db.VarChar(20)
+  downloadedAt DateTime?
+  error        String?   @db.Text
+
+  @@map("portfolios")
 }
 
 // Tracks each completed PKOrg import so all users can see when/by whom data was

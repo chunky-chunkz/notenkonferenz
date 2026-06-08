@@ -14,7 +14,7 @@ export function DashboardPage() {
 
   const showStats = isCex || isAdmin || isStaff;
   const showWorkingOn = isAdmin || isStaff;
-  const canVisieren = isExp || isCex || isAdmin || isStaff;
+  const canVisieren = isExp || isAdmin || isStaff;
   const canAnpassen = !isCex && (isExp || isAdmin || isStaff);
 
   const { data: statsData, isLoading: statsLoading } = useQuery({

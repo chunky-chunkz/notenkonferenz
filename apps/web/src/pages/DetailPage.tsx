@@ -36,7 +36,7 @@ export function DetailPage() {
     onError: (err: any) => toast.error(err.message),
   });
 
-  const canVisieren = isExp || isCex || isAdmin || isStaff;
+  const canVisieren = isExp || isAdmin || isStaff;
   const canAnpassen = !isCex && (isExp || isAdmin || isStaff);
 
   if (isLoading) return <div className="text-center py-12">Lade...</div>;

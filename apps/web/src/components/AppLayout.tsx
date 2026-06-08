@@ -19,8 +19,7 @@ export function AppLayout() {
 
   const navLinks = [
     { to: '/', label: 'Meine IPA', show: true },
-    { to: '/submitted', label: '📥 Abgegebene Dossiers', show: isVex && !isExp },
-    { to: '/dashboard', label: 'Dashboard', show: isStaff },
+    { to: '/dashboard', label: 'Dashboard', show: isVex && !isExp },
     { to: '/overview', label: 'Übersicht', show: isVex },
     { to: '/admin', label: 'Admin', show: isAdmin },
   ];

@@ -13,7 +13,6 @@ import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { UserManagementPage } from './pages/UserManagementPage';
 import { LogsPage } from './pages/LogsPage';
 import { MissingPortfoliosPage } from './pages/MissingPortfoliosPage';
-import { SubmittedPage } from './pages/SubmittedPage';
 import { ReactNode } from 'react';
 
 function StaffRoute({ children }: { children: ReactNode }) {
@@ -75,9 +74,9 @@ export const router = createBrowserRouter([
       // Vex + Staff + Admin (Experten können Dossiers ansehen und Noten eingeben)
       { path: 'overview', element: <VexRoute><OverviewPage /></VexRoute> },
       { path: 'missing-grades', element: <VexRoute><MissingGradesPage /></VexRoute> },
-      { path: 'submitted', element: <VexRoute><SubmittedPage /></VexRoute> },
-      // Staff + Admin
-      { path: 'dashboard', element: <StaffRoute><DashboardPage /></StaffRoute> },
+      { path: 'submitted', element: <Navigate to="/dashboard" replace /> },
+      // Vex + Staff + Admin (merged dashboard)
+      { path: 'dashboard', element: <VexRoute><DashboardPage /></VexRoute> },
       // Admin only
       { path: 'admin', element: <AdminRoute><AdminDashboardPage /></AdminRoute> },
       { path: 'admin/users', element: <AdminRoute><UserManagementPage /></AdminRoute> },

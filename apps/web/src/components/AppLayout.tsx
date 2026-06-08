@@ -2,7 +2,7 @@ import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export function AppLayout() {
-  const { user, loading, logout, isAdmin, isVex, isExp } = useAuth();
+  const { user, loading, logout, isAdmin, isVex, isExp, isCex } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -18,7 +18,7 @@ export function AppLayout() {
   }
 
   const navLinks = [
-    { to: '/', label: 'Meine IPA', show: true },
+    { to: '/', label: 'Meine IPA', show: !isCex },
     { to: '/dashboard', label: 'Dashboard', show: isVex && !isExp },
     { to: '/overview', label: 'Übersicht', show: isVex },
     { to: '/admin', label: 'Admin', show: isAdmin },

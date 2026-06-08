@@ -7,6 +7,7 @@ import { AppError } from '../middleware/errorHandler.js';
 import { env } from '../config/env.js';
 import { uploadZip } from '../middleware/upload.js';
 import { pkorgDownloadPortfolioZip, pkorgGetMandantId } from '../services/pkorg/pkorgClient.js';
+import { storage } from '../services/storage/index.js';
 
 export const filesRouter = Router();
 filesRouter.use(requireVex);
@@ -37,12 +38,14 @@ filesRouter.get('/portfolio/:kandidatId', async (req: Request, res: Response, ne
     const kandidat = item.kandidat;
     const filename = `Dossier_${kandidat?.nachname}_${kandidat?.vorname}.zip`;
 
-    // 1. Serve from local file if already downloaded
+    // 1. Serve from storage if already downloaded
     const dbPortfolio = await prisma.portfolio.findUnique({ where: { kandidatId } });
     if (dbPortfolio?.status === 'downloaded' && dbPortfolio.filePath) {
-      const localPath = path.join(env.MEDIA_DIR, dbPortfolio.filePath);
-      if (fs.existsSync(localPath)) {
-        res.download(localPath, filename);
+      if (await storage.exists(dbPortfolio.filePath)) {
+        const buffer = await storage.get(dbPortfolio.filePath);
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(buffer);
         return;
       }
     }
@@ -54,20 +57,19 @@ filesRouter.get('/portfolio/:kandidatId', async (req: Request, res: Response, ne
         const nmandantid = await pkorgGetMandantId(cookies);
         const buffer = await pkorgDownloadPortfolioZip(cookies, nmandantid, kandidatId);
 
-        const portfoliosDir = path.join(env.MEDIA_DIR, 'portfolios');
-        fs.mkdirSync(portfoliosDir, { recursive: true });
-        fs.writeFileSync(path.join(portfoliosDir, `${kandidatId}.zip`), buffer);
+        const storageKey = `portfolios/${kandidatId}.zip`;
+        await storage.put(storageKey, buffer, 'application/zip');
 
         await prisma.portfolio.upsert({
           where: { kandidatId },
           create: {
             kandidatId,
-            filePath: `portfolios/${kandidatId}.zip`,
+            filePath: storageKey,
             status: 'downloaded',
             downloadedAt: new Date(),
           },
           update: {
-            filePath: `portfolios/${kandidatId}.zip`,
+            filePath: storageKey,
             status: 'downloaded',
             downloadedAt: new Date(),
             error: null,
@@ -181,13 +183,11 @@ filesRouter.post(
       const files = req.files as Express.Multer.File[];
       const saved = files?.map((f) => f.originalname) ?? [];
 
-      // Move files to portfolios directory
-      const portfoliosDir = path.join(env.MEDIA_DIR, 'portfolios');
-      fs.mkdirSync(portfoliosDir, { recursive: true });
-
       for (const file of files ?? []) {
-        const dest = path.join(portfoliosDir, file.originalname);
-        fs.renameSync(file.path, dest);
+        const storageKey = `portfolios/${file.originalname}`;
+        const buffer = fs.readFileSync(file.path);
+        await storage.put(storageKey, buffer, 'application/zip');
+        fs.unlinkSync(file.path);
 
         // Update DB record if filename matches pattern {kandidatId}.zip
         const match = file.originalname.match(/^(\d+)\.zip$/);
@@ -199,12 +199,12 @@ filesRouter.post(
               where: { kandidatId },
               create: {
                 kandidatId,
-                filePath: `portfolios/${file.originalname}`,
+                filePath: storageKey,
                 status: 'downloaded',
                 downloadedAt: new Date(),
               },
               update: {
-                filePath: `portfolios/${file.originalname}`,
+                filePath: storageKey,
                 status: 'downloaded',
                 downloadedAt: new Date(),
                 error: null,

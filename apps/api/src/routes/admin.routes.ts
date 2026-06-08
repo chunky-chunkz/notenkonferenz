@@ -9,6 +9,7 @@ import { logAction } from '../services/logService.js';
 import { importQueue } from '../services/queue.js';
 import { pkorgGetRoles } from '../services/pkorg/pkorgClient.js';
 import { env } from '../config/env.js';
+import { storage } from '../services/storage/index.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireAdmin);
@@ -26,12 +27,18 @@ async function clearDataForScope(fachrichtung: string | null | undefined): Promi
       select: { pdfPath: true },
     });
 
-    // 2. Delete Notenuebersichten → cascades Anpassungen in DB
+    // 2. Collect portfolio storage keys for this fachrichtung before cascade delete
+    const portfolios = await prisma.portfolio.findMany({
+      where: { kandidat: { notenuebersicht: { fachrichtung: { contains: fachrichtung } } } },
+      select: { filePath: true },
+    });
+
+    // 3. Delete Notenuebersichten → cascades Anpassungen and Portfolios in DB
     await prisma.notenuebersicht.deleteMany({
       where: { fachrichtung: { contains: fachrichtung } },
     });
 
-    // 3. Remove orphaned persons no longer referenced by any Notenuebersicht
+    // 4. Remove orphaned persons no longer referenced by any Notenuebersicht
     await Promise.all([
       prisma.kandidat.deleteMany({ where: { notenuebersicht: null } }),
       prisma.hauptexperte.deleteMany({ where: { notenuebersichten: { none: {} } } }),
@@ -39,25 +46,32 @@ async function clearDataForScope(fachrichtung: string | null | undefined): Promi
       prisma.vf.deleteMany({ where: { notenuebersichten: { none: {} } } }),
     ]);
 
-    // 4. Remove uploaded PDF files from disk (Anpassungen)
+    // 5. Remove uploaded PDF files from disk (Anpassungen — still local)
     for (const { pdfPath } of anpassungen) {
       if (pdfPath && fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath);
     }
 
-    // 5. Remove portfolio + PDF files in fachrichtung subfolders
+    // 6. Remove PDF files in fachrichtung subfolder (local disk)
     const pdfDir = path.join(env.MEDIA_DIR, 'pdf', fachrichtung);
-    const portfoliosDir = path.join(env.MEDIA_DIR, 'portfolios', fachrichtung);
-    for (const dir of [pdfDir, portfoliosDir]) {
-      if (fs.existsSync(dir)) {
-        for (const file of fs.readdirSync(dir)) {
-          const filePath = path.join(dir, file);
-          if (fs.statSync(filePath).isFile()) fs.unlinkSync(filePath);
-        }
+    if (fs.existsSync(pdfDir)) {
+      for (const file of fs.readdirSync(pdfDir)) {
+        const filePath = path.join(pdfDir, file);
+        if (fs.statSync(filePath).isFile()) fs.unlinkSync(filePath);
+      }
+    }
+
+    // 7. Delete portfolio objects from storage (best effort)
+    for (const { filePath } of portfolios) {
+      if (filePath) {
+        try { await storage.delete(filePath); } catch { /* best effort */ }
       }
     }
   } else {
     // Global clear: all data
     const anpassungen = await prisma.anpassung.findMany({ select: { pdfPath: true } });
+
+    // Collect all portfolio storage keys before cascade delete
+    const portfolios = await prisma.portfolio.findMany({ select: { filePath: true } });
 
     await prisma.$transaction([
       prisma.anpassung.deleteMany(),
@@ -68,18 +82,24 @@ async function clearDataForScope(fachrichtung: string | null | undefined): Promi
       prisma.vf.deleteMany(),
     ]);
 
+    // Remove uploaded PDF files from disk (Anpassungen — still local)
     for (const { pdfPath } of anpassungen) {
       if (pdfPath && fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath);
     }
 
+    // Remove PDF files from local disk folder
     const pdfDir = path.join(env.MEDIA_DIR, 'pdf');
-    const portfoliosDir = path.join(env.MEDIA_DIR, 'portfolios');
-    for (const dir of [pdfDir, portfoliosDir]) {
-      if (fs.existsSync(dir)) {
-        for (const file of fs.readdirSync(dir)) {
-          const filePath = path.join(dir, file);
-          if (fs.statSync(filePath).isFile()) fs.unlinkSync(filePath);
-        }
+    if (fs.existsSync(pdfDir)) {
+      for (const file of fs.readdirSync(pdfDir)) {
+        const filePath = path.join(pdfDir, file);
+        if (fs.statSync(filePath).isFile()) fs.unlinkSync(filePath);
+      }
+    }
+
+    // Delete portfolio objects from storage (best effort)
+    for (const { filePath } of portfolios) {
+      if (filePath) {
+        try { await storage.delete(filePath); } catch { /* best effort */ }
       }
     }
   }

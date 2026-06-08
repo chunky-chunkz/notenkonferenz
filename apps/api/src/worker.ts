@@ -16,9 +16,8 @@ import {
 } from './services/pkorg/pkorgClient.js';
 import { logAction } from './services/logService.js';
 import * as XLSX from 'xlsx';
-import fs from 'node:fs';
-import path from 'node:path';
 import { env } from './config/env.js';
+import { storage } from './services/storage/index.js';
 
 type CookieJar = Record<string, string>;
 
@@ -711,11 +710,6 @@ async function handleDownloadPortfolios(job: Job, data: JobData) {
   const nmandantid = await pkorgGetMandantId(data.cookies);
   addLog(job, `📋 Mandant ID: ${nmandantid}`);
 
-  const portfoliosDir = data.fachrichtung
-    ? path.join(env.MEDIA_DIR, 'portfolios', data.fachrichtung)
-    : path.join(env.MEDIA_DIR, 'portfolios');
-  fs.mkdirSync(portfoliosDir, { recursive: true });
-
   const kandidaten = await prisma.kandidat.findMany(
     data.fachrichtung
       ? { where: { notenuebersicht: { fachrichtung: { contains: data.fachrichtung } } } }
@@ -730,47 +724,54 @@ async function handleDownloadPortfolios(job: Job, data: JobData) {
 
   for (let i = 0; i < kandidaten.length; i++) {
     const kandidat = kandidaten[i];
-    const filePath = path.join(portfoliosDir, `${kandidat.id}.zip`);
-    const relPath = data.fachrichtung
+    const storageKey = data.fachrichtung
       ? `portfolios/${data.fachrichtung}/${kandidat.id}.zip`
       : `portfolios/${kandidat.id}.zip`;
 
     const existing = await prisma.portfolio.findUnique({ where: { kandidatId: kandidat.id } });
 
-    if (existing?.status === 'downloaded' && fs.existsSync(filePath)) {
-      addLog(job, `⏩ ${kandidat.id}: already downloaded`);
-      skipped++;
-    } else {
-      await prisma.portfolio.upsert({
+    if (existing?.status === 'downloaded') {
+      const existsInStorage = await storage.exists(storageKey);
+      if (existsInStorage) {
+        addLog(job, `⏩ ${kandidat.id}: Portfolio already exists in storage, skipping`);
+        skipped++;
+        await job.updateProgress(Math.round(((i + 1) / total) * 100));
+        continue;
+      } else {
+        addLog(job, `⚠️ ${kandidat.id}: Portfolio DB row exists but object missing, re-downloading`);
+      }
+    }
+
+    await prisma.portfolio.upsert({
+      where: { kandidatId: kandidat.id },
+      create: { kandidatId: kandidat.id, status: 'downloading', error: null },
+      update: { status: 'downloading', error: null },
+    });
+
+    try {
+      addLog(job, `⬇️ ${kandidat.id}: downloading...`);
+      const buffer = await pkorgDownloadPortfolioZip(data.cookies, nmandantid, kandidat.id);
+      addLog(job, `📦 Saving portfolio to storage key ${storageKey}`);
+      await storage.put(storageKey, buffer, 'application/zip');
+
+      await prisma.portfolio.update({
         where: { kandidatId: kandidat.id },
-        create: { kandidatId: kandidat.id, status: 'downloading' },
-        update: { status: 'downloading', error: null },
+        data: { status: 'downloaded', filePath: storageKey, downloadedAt: new Date(), error: null },
       });
 
-      try {
-        addLog(job, `⬇️ ${kandidat.id}: downloading...`);
-        const buffer = await pkorgDownloadPortfolioZip(data.cookies, nmandantid, kandidat.id);
-        fs.writeFileSync(filePath, buffer);
-
-        await prisma.portfolio.update({
-          where: { kandidatId: kandidat.id },
-          data: { status: 'downloaded', filePath: relPath, downloadedAt: new Date(), error: null },
-        });
-
-        addLog(job, `✅ ${kandidat.id}: saved`);
-        downloaded++;
-      } catch (err) {
-        const msg = (err as Error).message;
-        await prisma.portfolio.update({
-          where: { kandidatId: kandidat.id },
-          data: { status: 'failed', error: msg },
-        });
-        addLog(job, `⚠️ ${kandidat.id}: ${msg}`);
-        failed++;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      addLog(job, `✅ ${kandidat.id}: saved`);
+      downloaded++;
+    } catch (err) {
+      const msg = (err as Error).message;
+      await prisma.portfolio.update({
+        where: { kandidatId: kandidat.id },
+        data: { status: 'failed', error: msg },
+      });
+      addLog(job, `⚠️ ${kandidat.id}: ${msg}`);
+      failed++;
     }
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     await job.updateProgress(Math.round(((i + 1) / total) * 100));
   }

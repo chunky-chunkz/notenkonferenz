@@ -15,7 +15,7 @@ const envSchema = z.object({
   UPLOAD_DIR: z.string().default('./uploads'),
   MEDIA_DIR: z.string().default('./media'),
 
-  // ── Cloudflare R2 (S3-compatible) ──────────────────────────────────────────
+  // ── Cloudflare R2 (S3-compatible, legacy) ──────────────────────────────────
   // When R2_BUCKET is set all four credential vars are required.
   // Leave unset to use local disk storage (development / single-instance demos).
   // NOTE: Render Free local disk is ephemeral — files are lost on every deploy
@@ -26,6 +26,19 @@ const envSchema = z.object({
   R2_SECRET_ACCESS_KEY: z.string().optional(),
   // Optional: base URL of a public R2 bucket or custom domain for direct downloads.
   R2_PUBLIC_URL: z.string().optional(),
+
+  // ── Generic S3-compatible storage ──────────────────────────────────────────
+  // STORAGE_PROVIDER selects the backend. Use 's3' for any S3-compatible service
+  // (Cloudflare R2, AWS S3, MinIO, etc.). Defaults to 'local' for dev/demos.
+  // When STORAGE_PROVIDER=s3, all S3_* credential vars are required.
+  // R2_* vars above are kept for backward compatibility and used as fallbacks.
+  STORAGE_PROVIDER: z.enum(['local', 's3']).default('local'),
+  S3_ENDPOINT: z.string().optional(),          // e.g. https://account.r2.cloudflarestorage.com or AWS endpoint
+  S3_REGION: z.string().default('auto'),
+  S3_BUCKET: z.string().optional(),
+  S3_ACCESS_KEY_ID: z.string().optional(),
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
+  S3_FORCE_PATH_STYLE: z.string().optional().transform(v => v === 'true'),
 
   // ── EXP visibility fallback ────────────────────────────────────────────────
   // When set to "true", EXP users see all Notenuebersichten in their fachrichtung
@@ -44,6 +57,14 @@ const envSchema = z.object({
       }
     }
   }
+
+  if (data.STORAGE_PROVIDER === 's3') {
+    for (const key of ['S3_ENDPOINT', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'] as const) {
+      if (!data[key]) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: `${key} is required when STORAGE_PROVIDER=s3` });
+      }
+    }
+  }
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -58,3 +79,7 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
+
+if (env.NODE_ENV === 'production' && env.STORAGE_PROVIDER === 'local' && !env.R2_BUCKET) {
+  console.warn('⚠️  STORAGE_PROVIDER=local in production — files will be lost on restart. Set STORAGE_PROVIDER=s3 with S3_* vars.');
+}

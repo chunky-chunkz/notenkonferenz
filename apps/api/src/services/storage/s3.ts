@@ -1,18 +1,11 @@
 /**
- * S3-compatible storage implementation targeting Cloudflare R2.
+ * S3-compatible storage implementation.
  *
- * R2 endpoint format: https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com
+ * Supports any S3-compatible endpoint (Cloudflare R2, AWS S3, MinIO, etc.).
+ * The endpoint URL is passed directly via constructor options.
  *
- * Required env vars (validated at startup in env.ts when R2_BUCKET is set):
- *   R2_BUCKET            – bucket name
- *   R2_ACCOUNT_ID        – Cloudflare account ID (used to build the endpoint)
- *   R2_ACCESS_KEY_ID     – R2 API token access key
- *   R2_SECRET_ACCESS_KEY – R2 API token secret key
- *
- * Optional:
- *   R2_PUBLIC_URL        – base URL of a public bucket / custom domain.
- *                          Not used by this service directly, but exported so
- *                          routes can build direct download URLs when needed.
+ * For Cloudflare R2 the endpoint format is:
+ *   https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com
  */
 import {
   S3Client,
@@ -38,15 +31,18 @@ export class S3StorageService implements StorageService {
   private readonly bucket: string;
 
   constructor(opts: {
-    accountId: string;
+    endpoint: string;
+    region: string;
     accessKeyId: string;
     secretAccessKey: string;
     bucket: string;
+    forcePathStyle?: boolean;
   }) {
     this.bucket = opts.bucket;
     this.client = new S3Client({
-      region: 'auto',
-      endpoint: `https://${opts.accountId}.r2.cloudflarestorage.com`,
+      region: opts.region,
+      endpoint: opts.endpoint,
+      forcePathStyle: opts.forcePathStyle ?? false,
       credentials: {
         accessKeyId: opts.accessKeyId,
         secretAccessKey: opts.secretAccessKey,

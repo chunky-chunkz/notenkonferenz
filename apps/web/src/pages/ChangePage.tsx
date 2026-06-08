@@ -1,14 +1,18 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { itemsApi } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 export function ChangePage() {
   const { kandidatId } = useParams<{ kandidatId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { isCex } = useAuth();
   const id = parseInt(kandidatId!, 10);
+
+  if (isCex) return <Navigate to="/dashboard" replace />;
   const [file, setFile] = useState<File | null>(null);
 
   const { data, isLoading } = useQuery({

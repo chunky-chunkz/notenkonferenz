@@ -15,18 +15,6 @@ import { LogsPage } from './pages/LogsPage';
 import { MissingPortfoliosPage } from './pages/MissingPortfoliosPage';
 import { ReactNode } from 'react';
 
-function StaffRoute({ children }: { children: ReactNode }) {
-  const { isStaff } = useAuth();
-  if (!isStaff) {
-    return (
-      <div className="text-center py-12">
-        <h2 className="text-xl font-bold mb-2">Zugang nicht erlaubt</h2>
-        <p className="text-gray-500">Sie benötigen Staff-Rechte für den Zugriff.</p>
-      </div>
-    );
-  }
-  return <>{children}</>;
-}
 
 function VexRoute({ children }: { children: ReactNode }) {
   const { isVex } = useAuth();

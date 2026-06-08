@@ -2,7 +2,7 @@ import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export function AppLayout() {
-  const { user, loading, logout, isStaff, isAdmin, isVex, isExp } = useAuth();
+  const { user, loading, logout, isAdmin, isVex, isExp } = useAuth();
   const location = useLocation();
 
   if (loading) {

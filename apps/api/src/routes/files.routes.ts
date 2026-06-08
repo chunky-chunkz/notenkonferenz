@@ -37,14 +37,23 @@ filesRouter.get('/portfolio/:kandidatId', async (req: Request, res: Response, ne
     const kandidat = item.kandidat;
     const filename = `Dossier_${kandidat?.nachname}_${kandidat?.vorname}.zip`;
 
-    // Try direct PKOrg download first if session is available
+    // 1. Serve from local file if already downloaded
+    const dbPortfolio = await prisma.portfolio.findUnique({ where: { kandidatId } });
+    if (dbPortfolio?.status === 'downloaded' && dbPortfolio.filePath) {
+      const localPath = path.join(env.MEDIA_DIR, dbPortfolio.filePath);
+      if (fs.existsSync(localPath)) {
+        res.download(localPath, filename);
+        return;
+      }
+    }
+
+    // 2. Fallback: fetch from PKOrg live if session is available
     const cookies = req.session.pkorgCookies;
     if (cookies) {
       try {
         const nmandantid = await pkorgGetMandantId(cookies);
         const buffer = await pkorgDownloadPortfolioZip(cookies, nmandantid, kandidatId);
 
-        // Save to disk and record in DB
         const portfoliosDir = path.join(env.MEDIA_DIR, 'portfolios');
         fs.mkdirSync(portfoliosDir, { recursive: true });
         fs.writeFileSync(path.join(portfoliosDir, `${kandidatId}.zip`), buffer);
@@ -69,22 +78,12 @@ filesRouter.get('/portfolio/:kandidatId', async (req: Request, res: Response, ne
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         res.send(buffer);
         return;
-      } catch (pkorgErr) {
-        // Fall through to local file
+      } catch {
+        // Fall through to 404
       }
     }
 
-    // Fallback: serve from DB-recorded path or default disk location
-    const dbPortfolio = await prisma.portfolio.findUnique({ where: { kandidatId } });
-    const filePath = dbPortfolio?.filePath
-      ? path.join(env.MEDIA_DIR, dbPortfolio.filePath)
-      : path.join(env.MEDIA_DIR, 'portfolios', `${kandidatId}.zip`);
-
-    if (!fs.existsSync(filePath)) {
-      throw new AppError(404, 'file_not_found', 'Portfolio file not found. Please connect to PKOrg or download portfolios first.');
-    }
-
-    res.download(filePath, filename);
+    throw new AppError(404, 'file_not_found', 'Portfolio file not found. Please connect to PKOrg or download portfolios first.');
   } catch (err) {
     next(err);
   }
